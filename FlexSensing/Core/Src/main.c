@@ -106,7 +106,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
+	  //Testing the Github upload
 	  //Since ADC readings are 12 bits, we bitwise and (&) with oxFFF to zero out the extra
 	  printf("First ADC reading = %d\r\n", 0xFFFF & ADCReading[0]);
 	  printf("Second = %d\r\n", 0xFFFF & ADCReading[1]);
