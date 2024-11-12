@@ -34,6 +34,7 @@
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define ADC_MAX 4095 //Maximum ADC reading
+#define NUM_ADC_CHANNELS 5 //How many threads the ADC will be reading from
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -48,7 +49,7 @@ DMA_HandleTypeDef hdma_adc1;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-uint32_t ADCReading[5] = {0}; //Hold the 5 12-bit ADC readings from the 5 channels
+uint32_t ADCReading[NUM_ADC_CHANNELS] = {0}; //Hold the ADC readings from each of the channels
 int ADCChannel = 0;
 /* USER CODE END PV */
 
@@ -99,22 +100,22 @@ int main(void)
   MX_USART2_UART_Init();
   MX_ADC1_Init();
   /* USER CODE BEGIN 2 */
-  HAL_ADC_Start_DMA(&hadc1, ADCReading, 5);
+  HAL_ADC_Start_DMA(&hadc1, ADCReading, NUM_ADC_CHANNELS);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	  //Testing the Github upload
+	  //This comment is for testing the Github upload
 	  //Since ADC readings are 12 bits, we bitwise and (&) with oxFFF to zero out the extra
-	  printf("First ADC reading = %d\r\n", 0xFFFF & ADCReading[0]);
-	  printf("Second = %d\r\n", 0xFFFF & ADCReading[1]);
-	  printf("Third = %d\r\n", 0xFFFF & ADCReading[2]);
-	  printf("Fourth = %d\r\n", 0xFFFF & ADCReading[3]);
-	  printf("Fifth = %d\r\n", 0xFFFF & ADCReading[4]);
-	  HAL_GPIO_TogglePin(GPIOA,GPIO_PIN_5);
-	  HAL_Delay(1000);
+	  printf("First ADC reading = %d\r\n", (int)(0xFFFF & ADCReading[0]));
+	  printf("Second = %d\r\n", (int)(0xFFFF & ADCReading[1]));
+	  printf("Third = %d\r\n", (int)(0xFFFF & ADCReading[2]));
+	  printf("Fourth = %d\r\n", (int)(0xFFFF & ADCReading[3]));
+	  printf("Fifth = %d\r\n", (int)(0xFFFF & ADCReading[4]));
+	  HAL_GPIO_TogglePin(GPIOA,GPIO_PIN_5); //Toggle the built in LED on the board to confirm it's running
+	  HAL_Delay(100);
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -189,7 +190,7 @@ static void MX_ADC1_Init(void)
   /** Configure the global features of the ADC (Clock, Resolution, Data Alignment and number of conversion)
   */
   hadc1.Instance = ADC1;
-  hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV4;
+  hadc1.Init.ClockPrescaler = ADC_CLOCK_SYNC_PCLK_DIV8;
   hadc1.Init.Resolution = ADC_RESOLUTION_12B;
   hadc1.Init.ScanConvMode = ENABLE;
   hadc1.Init.ContinuousConvMode = ENABLE;
@@ -351,7 +352,7 @@ int _write(int file, char *ptr, int len) {
 }
 
 /* ADC Conversion callback function
- * Conversions are called in order and they call this function at the end
+ * Conversions are called in order and they each call this function at the end
  * Place current conversion in respective position in array
  * If this is the fifth conversion in a row, know to reset so that next conversion goes to first index
  */
@@ -359,7 +360,7 @@ void HAL_ADC_ConvCpltCallback(ADC_HandleTypeDef* hadc)
 {
 	ADCReading[ADCChannel] = HAL_ADC_GetValue(&hadc1);
 	ADCChannel++;
-	if (ADCChannel == 5) ADCChannel = 0;
+	if (ADCChannel == NUM_ADC_CHANNELS) ADCChannel = 0;
 }
 
 /* USER CODE END 4 */
