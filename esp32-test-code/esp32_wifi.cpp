@@ -1,3 +1,5 @@
+#include <Arduino.h>
+#include <stdio.h>
 #include <WiFi.h>
 #include <micro_ros_arduino.h>
 #include <rmw_microros/rmw_microros.h> 
@@ -9,13 +11,18 @@
 #include <std_msgs/msg/string.h>
 #include <std_msgs/msg/int32.h>
 
-/* Wi-Fi Credentials SCHOOL */
+/* Wi-Fi Credentials SCHOOL 
 char* ssid = "uofm-guest";
 char* pass = "";
-char* agent_ip = "140.193.168.231";
+char* agent_ip = "140.193.170.49"; // this will always change every time you disconnect and reconnect
+*/
 
+/* Hotspot */
+char* ssid = "edcel";
+char* pass = "edcel1234";
+char* agent_ip = "172.20.10.9";
 
-uint16_t agent_port = 8888;
+char* agent_port = "8888";
 
 // ROS 2 topic message for subscribing
 rcl_subscription_t subscriber;
@@ -26,7 +33,6 @@ rcl_allocator_t allocator;
 rclc_executor_t executor;
 rclc_support_t support;
 rcl_node_t node;
-
 
 // Callback function for received messages
 void subscription_callback(const void *msg_in) {
@@ -46,12 +52,12 @@ void setup()
     while(WiFi.status() != WL_CONNECTED)
     {
         delay(500);
-        Serial.print(".");
+        Serial.println(".");
     }
     Serial.println("\nConnected");
 
     //  Initialize micro-ROS transport
-    set_microros_wifi_transports(ssid, pass, agent_ip, agent_port);
+    set_microros_wifi_transports(ssid, pass, agent_ip, atoi(agent_port));
 
     //  Ping the microROS Agent 
     Serial.print("Pinging micro-ROS Agent... ");
@@ -70,6 +76,7 @@ void setup()
     //  Initialize micro-ROS
     allocator = rcl_get_default_allocator();
 
+
     //  Initialize RCL init options 
     rcl_init_options_t init_options = rcl_get_zero_initialized_init_options();
     rcl_ret_t ret = rcl_init_options_init(&init_options, allocator);
@@ -84,7 +91,8 @@ void setup()
     }
 
     //  Set ROS DOMAIN ID Option to 
-    ret = rcl_init_options_set_domain_id(&init_options, 42);
+    size_t domain_id = 42;
+    ret = rcl_init_options_set_domain_id(&init_options, domain_id);
     if (ret != RCL_RET_OK)
     {
         Serial.println("\nFailed to set domain ID");
@@ -94,7 +102,7 @@ void setup()
     {
         Serial.println("ROS_DOMAIN_ID Set.");  
     }
-  
+    
     // Initialize micro-ROS support with default options
     ret = rclc_support_init_with_options(&support, 0, NULL, &init_options, &allocator);
     if (ret != RCL_RET_OK) 
@@ -124,7 +132,7 @@ void setup()
         &subscriber,
         &node,
         ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32),
-        "/esp32_topic"
+        "/esp32_topic_new"
     );
 
     // Set the subscription callback
