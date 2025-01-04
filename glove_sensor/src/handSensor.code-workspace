@@ -1,0 +1,13 @@
+{
+	"folders": [
+		{
+			"name": "handSensor",
+			"path": ".."
+		}
+	],
+	"settings": {
+		"files.associations": {
+			"iostream": "cpp"
+		}
+	}
+}
