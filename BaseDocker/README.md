@@ -11,7 +11,7 @@ Download the following files and put it into any directory you want to work in.
 
 First, to build the image from the Dockerfile.
 
--> docker build -t \<image-name>:<tag> .
+-> docker build -t \<image-name>:\<tag\> .
 
 * Note remember the name of the image and the tag eg. ece4600-image:latest 
 
