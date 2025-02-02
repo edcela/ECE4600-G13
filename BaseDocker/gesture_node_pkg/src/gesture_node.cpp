@@ -5,10 +5,8 @@
 #include <cmath>
 
 #include "rclcpp/rclcpp.hpp"
-#include "std_msgs/msg/int32_multi_array.hpp"
-#include "std_msgs/msg/int32.hpp"
-#include "gesture_node_pkg/msg/gesture.hpp"
-
+#include "std_msgs/msg/u_int8.hpp"
+#include "std_msgs/msg/u_int8_multi_array.hpp"
 using namespace std::chrono_literals;  // This will allow us to use time literals like "1s", "500ms", etc.
                                        
 
@@ -18,20 +16,20 @@ class GestureNode : public rclcpp::Node
     public:
         GestureNode() : Node("gesture_node")
         {
-            //  Suscribe to the Glove Topic 
-            subscription_ = this->create_subscription<std_msgs::msg::Int32MultiArray>
+            //  Subscribe to the Glove Topic 
+            subscription_ = this->create_subscription<std_msgs::msg::UInt8>
             (
-                "esp32_glove",
+                "/esp32_glove",
                 10,
                 std::bind(&GestureNode::listener_callback, this, std::placeholders::_1)
             );
 
             //  Publish to the Drone Topic
-            publisher_ = this->create_publisher<gesture_node_pkg::msg::Gesture>("esp32_drone", 10);
+            publisher_ = this->create_publisher<std_msgs::msg::UInt8MultiArray>("/esp32_drone", 10);
 
             // Timer: Publishing the telemetry message every second
             timer_ = this->create_wall_timer(
-                1s,  // 1 second
+                500ms,  // 500 ms
                 std::bind(&GestureNode::publish_msg, this));
 
             RCLCPP_INFO(this->get_logger(), "GestureNode node has been started.");
@@ -40,40 +38,37 @@ class GestureNode : public rclcpp::Node
 
     private:
         //  Listerner Callback Function
-        void listener_callback(const std_msgs::msg::Int32MultiArray::SharedPtr msg)
+        void listener_callback(const std_msgs::msg::UInt8::SharedPtr msg)
         {
             //  Access the data from the received message 
-            std::vector<int> data = msg->data;
+            uint8_t data = msg->data;
 
-            //  Gesture Control Control Here
-            //
-            //
-            //  result = 
-            //
-
-            int result = 1;
-
-            latest_cmd_ = 1;
+            //  Determine Command/Agent Here 
+            
+            if (data == 1) result = 1;
+            else if (data == 2) result = 2;
+            else if (data == 138) result = 3;
+            else result = 0;
 
             //  Log the calculation 
-            RCLCPP_INFO(this->get_logger(), "Received: [%s], Result: %d", vector_to_string(data).c_str(), result);
+            RCLCPP_INFO(this->get_logger(), "Received: [%u], Result: %d", static_cast<unsigned int>(data), result);
 
             RCLCPP_INFO(this->get_logger(), "Published: %d", result);
         }
 
         void publish_msg()
         {
-            auto gesture_msg = gesture_node_pkg::msg::Gesture();
-            gesture_msg.agent_id = latest_agentid_;
-            gesture_msg.command = latest_cmd_;
+            std_msgs::msg::UInt8MultiArray gesture_msg;
+            gesture_msg.data = {latest_agentid_, latest_cmd_}; 
+
+            RCLCPP_INFO(this->get_logger(), "Published Gesture message. Message: Agent ID: %d, Command: %d", gesture_msg.data[0], gesture_msg.data[1]);
 
             publisher_->publish(gesture_msg); 
-
-            RCLCPP_INFO(this->get_logger(), "Published Gesture message.");
         }
 
         //  Helper Function - convert vector to string 
-        std::string vector_to_string(const std::vector<int32_t> &vec)
+        /*
+        std::string vector_to_string(const std::vector<uint8_t> &vec)
         {
             std::string result = "";
 
@@ -85,18 +80,20 @@ class GestureNode : public rclcpp::Node
             }
 
             return result;
-
         }
+        */
         
         //  Subscriber and Publisher
-        rclcpp::Subscription<std_msgs::msg::Int32MultiArray>::SharedPtr subscription_;
-        rclcpp::Publisher<gesture_node_pkg::msg::Gesture>::SharedPtr publisher_;
+        rclcpp::Subscription<std_msgs::msg::UInt8>::SharedPtr subscription_;
+        rclcpp::Publisher<std_msgs::msg::UInt8MultiArray>::SharedPtr publisher_;
 
         // Timer
         rclcpp::TimerBase::SharedPtr timer_;
 
-        int latest_agentid_ = -1;
-        int latest_cmd_ = -1;
+        uint8_t latest_agentid_ = 0;
+        uint8_t latest_cmd_ = 0;
+        int result = 0;
+        int status = 0;
 };
 
 int main(int argc, char *argv[])
