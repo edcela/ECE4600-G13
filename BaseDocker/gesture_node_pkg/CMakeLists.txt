@@ -9,19 +9,19 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
-find_package(rosidl_default_generators REQUIRED)
+# find_package(rosidl_default_generators REQUIRED)
 
 # Generate ROS 2 interfaces
-rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/Gesture.msg"
-)
+#rosidl_generate_interfaces(${PROJECT_NAME}
+#  "msg/Gesture.msg"
+#)
 
 
 # Add the executable
 add_executable(gesture_node src/gesture_node.cpp)
 ament_target_dependencies(gesture_node rclcpp std_msgs)
-rosidl_get_typesupport_target(typesupport_target ${PROJECT_NAME} "rosidl_typesupport_cpp")
-target_link_libraries(gesture_node ${typesupport_target})
+#rosidl_get_typesupport_target(typesupport_target ${PROJECT_NAME} "rosidl_typesupport_cpp")
+#target_link_libraries(gesture_node ${typesupport_target})
 
 # Install the executable
 install(TARGETS gesture_node
