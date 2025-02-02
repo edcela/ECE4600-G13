@@ -1,21 +1,23 @@
 #include <Arduino.h>
 #include <stdio.h>
-#include <WiFi.h>
+#include <HardwareSerial.h>
 #include <micro_ros_arduino.h>
 #include <rmw_microros/rmw_microros.h> 
 #include <rcl/rcl.h>
 #include <rclc/rclc.h>
 #include <rclc/executor.h>
-#include <rclc/publisher.h>
 #include <rclc/subscription.h>
-#include <std_msgs/msg/string.h>
-#include <std_msgs/msg/int32.h>
+#include <std_msgs/msg/u_int8_multi_array.h>
 
-/* Wi-Fi Credentials SCHOOL 
-char* ssid = "uofm-guest";
-char* pass = "";
-char* agent_ip = "140.193.170.49"; // this will always change every time you disconnect and reconnect
-*/
+//  Definitions
+#define TX_PIN 17 //  Pin 2
+#define RX_PIN 16 //  Pin 4
+#define UART_BAUD_RATE 115200
+#define ALL_AGENTS 0
+#define AGENT_1 1
+#define AGENT_2 2
+
+HardwareSerial agentSerial(1);
 
 /* Hotspot */
 char* ssid = "edcel";
@@ -27,7 +29,7 @@ char* agent_port = "8888";
 // ROS 2 topic message for subscribing
 rcl_subscription_t subscriber;
 
-std_msgs__msg__Int32 incoming_msg;
+std_msgs__msg__UInt8MultiArray incoming_msg;
 
 rcl_allocator_t allocator;
 rclc_executor_t executor;
@@ -35,29 +37,49 @@ rclc_support_t support;
 rcl_node_t node;
 
 // Callback function for received messages
-void subscription_callback(const void *msg_in) {
-    const std_msgs__msg__Int32 *msg = (const std_msgs__msg__Int32 *)msg_in;
-    Serial.print("Received message: ");
-    Serial.println(msg->data);
+void subscription_callback(const void *msg_in) 
+{
+    const std_msgs__msg__UInt8MultiArray *msg = (const std_msgs__msg__UInt8MultiArray *)msg_in;
+    Serial.println("Message Received: ");
+    for (size_t i = 0; i < msg->data.size; i++)
+    {
+        Serial.printf("Data[%d] = %d\n", i, msg->data.data[i]);
+    }
+
+    delay(200);
+    
+    if (msg->data.data[0] == 0 || msg->data.data[0] == 1)
+    {
+      Serial.println("Agent will send: ");
+      //Serial.print(msg->data.data[1]);
+      agentSerial.print((int)msg->data.data[1]);
+    }
 }
 
 void setup()
 {
     //  Initialize Serial for debugging 
-    Serial.begin(115200);
+    Serial.begin(UART_BAUD_RATE);
+    agentSerial.begin(UART_BAUD_RATE, SERIAL_8N1, RX_PIN, TX_PIN);
     delay(1000);
-
-    //  Attempt to connect to Wi-Fi
-    WiFi.begin(ssid, pass);
-    while(WiFi.status() != WL_CONNECTED)
-    {
-        delay(500);
-        Serial.println(".");
-    }
-    Serial.println("\nConnected");
 
     //  Initialize micro-ROS transport
     set_microros_wifi_transports(ssid, pass, agent_ip, atoi(agent_port));
+
+    //  Initialize the Int32MultiArray
+    if (std_msgs__msg__UInt8MultiArray__init(&incoming_msg)) 
+    {
+        Serial.println("Int32MultiArray initialized");
+    } 
+    else 
+    {
+        Serial.println("Failed Int32MultiArray initialization");
+    }
+
+    // Allocate space for array data manually (if known size)
+    incoming_msg.data.data = (uint8_t *)malloc(2 * sizeof(uint8_t));
+    incoming_msg.data.size = 0;
+    incoming_msg.data.capacity = 2;
 
     //  Ping the microROS Agent 
     Serial.print("Pinging micro-ROS Agent... ");
@@ -69,13 +91,8 @@ void setup()
         Serial.println("Failed to connect to micro-ROS Agent");
     }
 
-    //  Print ESP32 Address
-    Serial.println("ESP32 IP Address");
-    Serial.println(WiFi.localIP());
-
     //  Initialize micro-ROS
     allocator = rcl_get_default_allocator();
-
 
     //  Initialize RCL init options 
     rcl_init_options_t init_options = rcl_get_zero_initialized_init_options();
@@ -131,8 +148,8 @@ void setup()
     rclc_subscription_init_default(
         &subscriber,
         &node,
-        ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, Int32),
-        "/esp32_topic_new"
+        ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, UInt8MultiArray),
+        "/esp32_drone"
     );
 
     // Set the subscription callback
@@ -144,12 +161,10 @@ void setup()
 
 void loop()
 {
-
     Serial.println("Spinning...");
     //  Spin Executor
     rclc_executor_spin_some(&executor, RCL_MS_TO_NS(100));
 
     //  Delay to control publishing rate
-    delay(1000);
-
+    delay(10);
 }
