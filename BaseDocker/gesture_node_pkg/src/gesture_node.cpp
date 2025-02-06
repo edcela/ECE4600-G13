@@ -7,6 +7,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/u_int8.hpp"
 #include "std_msgs/msg/u_int8_multi_array.hpp"
+#include "Glove.h"
 using namespace std::chrono_literals;  // This will allow us to use time literals like "1s", "500ms", etc.
                                        
 
@@ -43,12 +44,13 @@ class GestureNode : public rclcpp::Node
             //  Access the data from the received message 
             uint8_t data = msg->data;
 
-            //  Determine Command/Agent Here 
-            
-            if (data == 1) result = 1;
-            else if (data == 2) result = 2;
-            else if (data == 138) result = 3;
-            else result = 0;
+            //  Determine Command/Agent Here
+            //  CONVERSIONS
+            //
+            //
+            //
+            //
+            //  CONVERSIONS
 
             //  Log the calculation 
             RCLCPP_INFO(this->get_logger(), "Received: [%u], Result: %d", static_cast<unsigned int>(data), result);
@@ -65,23 +67,6 @@ class GestureNode : public rclcpp::Node
 
             publisher_->publish(gesture_msg); 
         }
-
-        //  Helper Function - convert vector to string 
-        /*
-        std::string vector_to_string(const std::vector<uint8_t> &vec)
-        {
-            std::string result = "";
-
-            for (size_t i = 0; i < vec.size(); i++)
-            {
-                result += std::to_string(vec[i]);
-                if (i != vec.size()-1)
-                    result += ", ";
-            }
-
-            return result;
-        }
-        */
         
         //  Subscriber and Publisher
         rclcpp::Subscription<std_msgs::msg::UInt8>::SharedPtr subscription_;
