@@ -197,6 +197,7 @@ int main(void)
   float dt = 0.01;
   int16_t roll_output = 0;
   int16_t pitch_output = 0;
+  int temp = 0;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -223,19 +224,20 @@ int main(void)
 	  pid_roll.measured_val = current_roll;
 	  pid_pitch.measured_val = current_pitch;
 
-	  roll_output = Compute_PID(&pid_roll);
-	  pitch_output = Compute_PID(&pid_pitch);
+	  roll_output = (int16_t)Compute_PID(&pid_roll);
+	  pitch_output = (int16_t)Compute_PID(&pid_pitch);
 
-//	  Handle_Input();
-//	  motor_speeds[0] = motor_speeds[0] + roll_output - pitch_output;
-//	  motor_speeds[1] = motor_speeds[1] + roll_output + pitch_output;
-//	  motor_speeds[2] = 0;//motor_speeds[2] - roll_Output + pitch_Output;
-//	  motor_speeds[3] = motor_speeds[3] - roll_output - pitch_output;
-//	  Update_Motors();
+	  Handle_Input();
+	  //temp = motor_speeds[0] + roll_output - pitch_output;
+	  motor_speeds[0] = motor_speeds[0] + roll_output - pitch_output;
+	  motor_speeds[1] = motor_speeds[1] + roll_output + pitch_output;
+	  motor_speeds[2] = 0;//motor_speeds[2] - roll_Output + pitch_Output;
+	  motor_speeds[3] = motor_speeds[3] - roll_output - pitch_output;
+	  Update_Motors();
 
 //	  print_PID_data(roll_output,pitch_output);
 
-	  HAL_Delay(50);
+//	  HAL_Delay(50);
 
     /* USER CODE END WHILE */
 
@@ -496,9 +498,9 @@ float Compute_PID(PID *pid)
 	if(outputPID > pid->max_output) outputPID = pid->max_output;
 	if(outputPID < pid->min_output) outputPID = pid->min_output;
 
-	printf("Error: %.2f | P: %.2f | I: %.2f | D: %.2f | Output: %.2f\r\n", error, termP, termI, termD, outputPID);
-	printf("Setpoint: %.2f | Measured: %.2f | Error: %.2f\r\n", pid->setpoint, pid->measured_val, error);
-	printf("dt: %.6f\r\n", pid->dt);
+	//printf("Error: %.2f | P: %.2f | I: %.2f | D: %.2f | Output: %.2f\r\n", error, termP, termI, termD, outputPID);
+	//printf("Setpoint: %.2f | Measured: %.2f | Error: %.2f\r\n", pid->setpoint, pid->measured_val, error);
+	//printf("dt: %.6f\r\n", pid->dt);
 
 	return outputPID;
 }
