@@ -3,6 +3,8 @@
 #include <memory>
 #include <string>
 #include <cmath>
+#include <vector>
+#include <algorithm>
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/u_int8.hpp"
@@ -52,6 +54,8 @@ std::vector<gesture> initializeCommandBank(){
   thumbsRight.setFingerStates(EXTD,FLEX,FLEX,FLEX,FLEX);
   thumbsRight.assignDroneCommand(CMD_RIGHT);
   bank.push_back(thumbsRight);
+
+  std::sort(bank.begin(), bank.end());
   
   return bank;
 }
@@ -97,6 +101,8 @@ std::vector<gesture> initializeSelectBank(){
   thumbsUp.setOrientation(THUMB_UP);
   thumbsUp.setFingerStates(EXTD,FLEX,FLEX,FLEX,FLEX);
   bank.push_back(thumbsUp);
+
+  std::sort(bank.begin(), bank.end());
   
   return bank;
 }
@@ -144,8 +150,10 @@ class GestureNode : public rclcpp::Node
             uint8_t data = msg->data;
 
             //Toggle between agent select and control mode
-            if(toggle.checkGesture(data)){
+            //This toggle MUST BE DISABLED after a toggle until another command enables it
+            if(toggle.checkGesture(data) && !toggleLock){
               mode_ = (mode_ == SELECT_MODE) ? CONTROL_MODE : SELECT_MODE;
+              toggleLock = true;  //locks the toggle until another gesture is done, this prevents repetitive calling of the toggle when the gesture is done by the user
             }
 
             //Select Phase Logic
@@ -201,6 +209,7 @@ class GestureNode : public rclcpp::Node
         uint8_t selectedAgents;             //Buffer for agent select phase
 
         gesture toggle;                     //Toggle gesture for Select and Control Agent phases
+        bool toggleLock;
         phase mode_ = PHASE_SELECTION;      //Indicates what mode you are currently on. "phase" included in Glove.h
 
         int result = 0;
