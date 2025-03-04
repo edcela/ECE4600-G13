@@ -59,8 +59,8 @@ typedef enum {
 #define MOTOR_START_SPEED 0				//Motor Speed at Initialization (Max. 2000)
 #define MOTOR_DESCEND_SPEED 50			//Motor speed to use when descending (Max. 2000)
 #define MOTOR_ASCEND_SPEED 100			//Motor speed to use when ascending (Max. 2000)
-#define MOTOR_DIRECTION_DECREASE 0	 	//Lower motor speed to use when moving in a lateral direction (Max. 2000)
-#define MOTOR_DIRECTION_INCREASE 100	//Higher motor speed to use when moving in a lateral direction (Max. 2000)
+#define MOTOR_DIRECTION_DECREASE 150	 	//Lower motor speed to use when moving in a lateral direction (Max. 2000)
+#define MOTOR_DIRECTION_INCREASE 250	//Higher motor speed to use when moving in a lateral direction (Max. 2000)
 #define MOTOR_HOVER_SPEED 200			//Motor speed to use for hovering (Max. 2000)
 
 #define MPU6500_ADDR 0xD0				//MPU6500 I2C Address (AD0 = 0)
@@ -197,7 +197,6 @@ int main(void)
   float dt = 0.01;
   int16_t roll_output = 0;
   int16_t pitch_output = 0;
-  int temp = 0;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -231,7 +230,7 @@ int main(void)
 	  //temp = motor_speeds[0] + roll_output - pitch_output;
 	  motor_speeds[0] = motor_speeds[0] + roll_output - pitch_output;
 	  motor_speeds[1] = motor_speeds[1] + roll_output + pitch_output;
-	  motor_speeds[2] = 0;//motor_speeds[2] - roll_Output + pitch_Output;
+	  motor_speeds[2] = motor_speeds[2] - roll_output + pitch_output;
 	  motor_speeds[3] = motor_speeds[3] - roll_output - pitch_output;
 	  Update_Motors();
 
@@ -612,14 +611,14 @@ void Execute_Command(DroneCommand command)
 		case CMD_ASCEND:
 			motor_speeds[0] = MOTOR_ASCEND_SPEED;
 			motor_speeds[1] = MOTOR_ASCEND_SPEED;
-			motor_speeds[2] = 0;//MOTOR_ASCEND_SPEED;
+			motor_speeds[2] = MOTOR_ASCEND_SPEED;
 			motor_speeds[3] = MOTOR_ASCEND_SPEED;
 			Update_Motors();
 			break;
 		case CMD_DESCEND:
 			motor_speeds[0] = MOTOR_DESCEND_SPEED;
 			motor_speeds[1] = MOTOR_DESCEND_SPEED;
-			motor_speeds[2] = 0;//MOTOR_DESCEND_SPEED;
+			motor_speeds[2] = MOTOR_DESCEND_SPEED;
 			motor_speeds[3] = MOTOR_DESCEND_SPEED;
 			Update_Motors();
 			break;
@@ -634,28 +633,28 @@ void Execute_Command(DroneCommand command)
 		case CMD_LEFT:
 			motor_speeds[0] = MOTOR_DIRECTION_DECREASE;
 			motor_speeds[1] = MOTOR_DIRECTION_DECREASE;
-			motor_speeds[2] = 0;//MOTOR_DIRECTION_INCREASE;
+			motor_speeds[2] = MOTOR_DIRECTION_INCREASE;
 			motor_speeds[3] = MOTOR_DIRECTION_INCREASE;
 			Update_Motors();
 			break;
 		case CMD_RIGHT:
 			motor_speeds[0] = MOTOR_DIRECTION_INCREASE;
 			motor_speeds[1] = MOTOR_DIRECTION_INCREASE;
-			motor_speeds[2] = 0;//MOTOR_DIRECTION_DECREASE;
+			motor_speeds[2] = MOTOR_DIRECTION_DECREASE;
 			motor_speeds[3] = MOTOR_DIRECTION_DECREASE;
 			Update_Motors();
 			break;
 		case CMD_FORWARD:
 			motor_speeds[0] = MOTOR_DIRECTION_INCREASE;
 			motor_speeds[1] = MOTOR_DIRECTION_DECREASE;
-			motor_speeds[2] = 0;//MOTOR_DIRECTION_DECREASE;
+			motor_speeds[2] = MOTOR_DIRECTION_DECREASE;
 			motor_speeds[3] = MOTOR_DIRECTION_INCREASE;
 			Update_Motors();
 			break;
 		case CMD_BACK:
 			motor_speeds[0] = MOTOR_DIRECTION_DECREASE;
 			motor_speeds[1] = MOTOR_DIRECTION_INCREASE;
-			motor_speeds[2] = 0;//MOTOR_DIRECTION_INCREASE;
+			motor_speeds[2] = MOTOR_DIRECTION_INCREASE;
 			motor_speeds[3] = MOTOR_DIRECTION_DECREASE;
 			Update_Motors();
 			break;
