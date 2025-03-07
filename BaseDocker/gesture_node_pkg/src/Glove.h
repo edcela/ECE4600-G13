@@ -132,7 +132,6 @@ public:
     bool operator < (const gesture& otherGesture) const;
     bool operator > (const gesture& otherGesture) const;
     bool operator == (const gesture& otherGesture) const;
-    void operator = (gesture& replacementGesture) const;
 
     //removes all gesture information
     void clearGesture();
