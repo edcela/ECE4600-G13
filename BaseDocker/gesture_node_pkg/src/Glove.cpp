@@ -154,12 +154,6 @@ bool gesture::operator == (const gesture& otherGesture) const {
     return checkGesture(otherGesture.getGestureID());
 }
 
-void gesture::operator = (gesture& replacementGesture){
-    gestureID = replacementGesture.getGestureID();
-    flexion = replacementGesture.getFingerStates();
-    orientation = replacementGesture.getOrientation();
-}
-
 //removes all gesture information
 void gesture::clearGesture(){
     gestureID = 0;
