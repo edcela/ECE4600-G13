@@ -59,8 +59,8 @@ typedef enum {
 #define MOTOR_START_SPEED 0				//Motor Speed at Initialization (Max. 2000)
 #define MOTOR_DESCEND_SPEED 50			//Motor speed to use when descending (Max. 2000)
 #define MOTOR_ASCEND_SPEED 100			//Motor speed to use when ascending (Max. 2000)
-#define MOTOR_DIRECTION_DECREASE 150	 	//Lower motor speed to use when moving in a lateral direction (Max. 2000)
-#define MOTOR_DIRECTION_INCREASE 250	//Higher motor speed to use when moving in a lateral direction (Max. 2000)
+#define MOTOR_DIRECTION_DECREASE 0	 	//Lower motor speed to use when moving in a lateral direction (Max. 2000)
+#define MOTOR_DIRECTION_INCREASE 100	//Higher motor speed to use when moving in a lateral direction (Max. 2000)
 #define MOTOR_HOVER_SPEED 200			//Motor speed to use for hovering (Max. 2000)
 
 #define MPU6500_ADDR 0xD0				//MPU6500 I2C Address (AD0 = 0)
@@ -189,8 +189,8 @@ int main(void)
   HAL_TIM_PWM_Start(&htim3, TIM_CHANNEL_4);		//Motor4
 
   //Initializing the PID controllers
-  init_PID(&pid_roll, 0.1, 0.006, 0.05, 0.01);
-  init_PID(&pid_pitch, 0.1, 0.006, 0.05, 0.01);
+  init_PID(&pid_roll, 0.15, 0.0008, 0.01, 0.01);
+  init_PID(&pid_pitch, 0.15, 0.0008, 0.01, 0.01);
 
   uint32_t last_time = HAL_GetTick();		//track time
   uint32_t current_time = 0;
@@ -227,7 +227,6 @@ int main(void)
 	  pitch_output = (int16_t)Compute_PID(&pid_pitch);
 
 	  Handle_Input();
-	  //temp = motor_speeds[0] + roll_output - pitch_output;
 	  motor_speeds[0] = motor_speeds[0] + roll_output - pitch_output;
 	  motor_speeds[1] = motor_speeds[1] + roll_output + pitch_output;
 	  motor_speeds[2] = motor_speeds[2] - roll_output + pitch_output;
@@ -236,7 +235,7 @@ int main(void)
 
 //	  print_PID_data(roll_output,pitch_output);
 
-//	  HAL_Delay(50);
+	  HAL_Delay(50);
 
     /* USER CODE END WHILE */
 
@@ -476,12 +475,11 @@ float Compute_PID(PID *pid)
 	pid->integral += error * pid->dt;
 	if(pid->integral > pid->max_integral) pid->integral = pid->max_integral;
 	if(pid->integral < pid->min_integral) pid->integral = pid->min_integral;
-	if(fabs(error)<0.02) pid->integral *= 0.99;
+	if(fabs(error)<0.5) pid->integral *= 0.95;
 	float termI = pid->ki * pid->integral;
 	//D term (with smoothing)
 	float raw_derivative = (error - pid->prev_error)/ pid->dt;
 	//LPF
-//	pid->filtered_derivative = raw_derivative;
 	pid->filtered_derivative = (alpha * raw_derivative) + ((1-alpha) * pid->filtered_derivative);
 
 	// Clamp filtered derivative to prevent runaway values
@@ -490,6 +488,9 @@ float Compute_PID(PID *pid)
 
 	float termD = pid->kd * pid->filtered_derivative;
 	//update previous error
+	if (error * pid->prev_error < 0){
+		pid->integral = 0;
+	}
 	pid->prev_error = error;
 	//Combine the terms
 	float outputPID = termP + termI + termD;
@@ -497,9 +498,9 @@ float Compute_PID(PID *pid)
 	if(outputPID > pid->max_output) outputPID = pid->max_output;
 	if(outputPID < pid->min_output) outputPID = pid->min_output;
 
-	//printf("Error: %.2f | P: %.2f | I: %.2f | D: %.2f | Output: %.2f\r\n", error, termP, termI, termD, outputPID);
-	//printf("Setpoint: %.2f | Measured: %.2f | Error: %.2f\r\n", pid->setpoint, pid->measured_val, error);
-	//printf("dt: %.6f\r\n", pid->dt);
+	printf("Error: %.2f | P: %.2f | I: %.2f | D: %.2f | Output: %.2f\r\n", error, termP, termI, termD, outputPID);
+	printf("Setpoint: %.2f | Measured: %.2f | Error: %.2f\r\n", pid->setpoint, pid->measured_val, error);
+	printf("dt: %.6f\r\n", pid->dt);
 
 	return outputPID;
 }
