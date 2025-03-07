@@ -22,8 +22,8 @@ gesture::~gesture() {}       //deconstructor
 
 void gesture::updateID(uint8_t ID){
     gestureID = ID;
-    flexion = ID && 0xF8;
-    orientation = ID && 0x07;
+    flexion = ID & 0xF8;
+    orientation = ID & 0x07;
 }
 
 //Get the sensor data of the gesture
@@ -122,15 +122,14 @@ bool gesture::checkGesture(uint8_t currentGesture) const {
         if (!multipleOrientations) {
             return currentGesture == gestureID;
         } else {
-            return std::any_of(allowedOrientations.begin(), allowedOrientations.end(), 
-                [currentGesture](uint8_t orientation, uint8_t flexion) { return currentGesture == (flexion + orientation); });
+            return std::any_of(allowedOrientations.begin(), allowedOrientations.end(), [currentGesture, this](uint8_t orientation) { return currentGesture == (flexion + orientation); });
         }
     }
 
     //Case 3: Multiple finger states is valid for this gesture but only one orientation
     if (!multipleOrientations) {
         return std::any_of(allowedFlexionStates.begin(), allowedFlexionStates.end(),
-            [currentGesture](uint8_t flexion, uint8_t orientation) { return currentGesture == (flexion + orientation); });
+            [currentGesture, this](uint8_t flexion) { return currentGesture == (flexion + orientation); });
     }
     
     //Case 4: Multiple finger states and multiple orientations are valid for this gesture
@@ -153,6 +152,14 @@ bool gesture::operator > (const gesture& otherGesture) const {
 bool gesture::operator == (const gesture& otherGesture) const {
     return checkGesture(otherGesture.getGestureID());
 }
+
+/*
+void gesture::operator = (gesture& replacementGesture){
+    gestureID = replacementGesture.getGestureID();
+    flexion = replacementGesture.getFingerStates();
+    orientation = replacementGesture.getOrientation();
+}
+*/
 
 //removes all gesture information
 void gesture::clearGesture(){
