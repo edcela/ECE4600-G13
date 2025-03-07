@@ -47,7 +47,8 @@ void subscription_callback(const void *msg_in)
     }
 
     delay(200);
-    
+
+    //    CHANGE THIS TO WORK WITH THE BITWISE
     if (msg->data.data[0] == 0 || msg->data.data[0] == 1)
     {
       Serial.println("Agent will send: ");
