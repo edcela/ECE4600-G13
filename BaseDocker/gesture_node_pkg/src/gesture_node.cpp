@@ -12,110 +12,110 @@
 #include "Glove.h"
 using namespace std::chrono_literals;  // This will allow us to use time literals like "1s", "500ms", etc.
 
-//  Establish Gesture Bank for Robot Commands
-std::vector<gesture> initializeCommandBank(){
-  std::vector<gesture> bank;
+    //  Establish Gesture Bank for Robot Commands
+std::vector<gesture> initializeCommandBank()
+    {
+        std::vector<gesture> bank;
 
-  gesture pointUp;            //drone go up
-  gesture pointDown;          //drone go down
-  gesture pointForward;       //drone go forward
-  gesture thumbsBack;         //drone go backward
-  gesture thumbsLeft;         //drone go left
-  gesture thumbsRight;        //drone go right
-  
-  pointUp.setOrientation(FINGER_UP);
-  pointUp.setFingerStates(FLEX,EXTD,FLEX,FLEX,FLEX);
-  pointUp.assignDroneCommand(CMD_ASCEND);
-  bank.push_back(pointUp);
+        gesture pointUp;            //drone go up
+        gesture pointDown;          //drone go down
+        gesture pointForward;       //drone go forward
+        gesture thumbsBack;         //drone go backward
+        gesture thumbsLeft;         //drone go left
+        gesture thumbsRight;        //drone go right
 
-  pointDown.setOrientation(FINGER_DOWN);
-  pointDown.setFingerStates(FLEX,EXTD,FLEX,FLEX,FLEX);
-  pointDown.assignDroneCommand(CMD_DESCEND);
-  bank.push_back(pointDown);
+        pointUp.setOrientation(FINGER_UP);
+        pointUp.setFingerStates(FLEX,EXTD,FLEX,FLEX,FLEX);
+        pointUp.assignDroneCommand(CMD_ASCEND);
+        bank.push_back(pointUp);
 
-  pointForward.setOrientation(THUMB_UP);
-  pointForward.addOrientation(PALM_UP);
-  pointForward.addOrientation(PALM_DOWN);
-  pointForward.setFingerStates(FLEX,EXTD,FLEX,FLEX,FLEX);
-  pointForward.assignDroneCommand(CMD_FORWARD);
-  bank.push_back(pointForward);
+        pointDown.setOrientation(FINGER_DOWN);
+        pointDown.setFingerStates(FLEX,EXTD,FLEX,FLEX,FLEX);
+        pointDown.assignDroneCommand(CMD_DESCEND);
+        bank.push_back(pointDown);
 
-  thumbsBack.setOrientation(FINGER_UP);
-  thumbsBack.setFingerStates(EXTD,FLEX,FLEX,FLEX,FLEX);
-  thumbsBack.assignDroneCommand(CMD_BACK);
-  bank.push_back(thumbsBack);
+        pointForward.setOrientation(THUMB_UP);
+        pointForward.addOrientation(PALM_UP);
+        pointForward.addOrientation(PALM_DOWN);
+        pointForward.setFingerStates(FLEX,EXTD,FLEX,FLEX,FLEX);
+        pointForward.assignDroneCommand(CMD_FORWARD);
+        bank.push_back(pointForward);
 
-  thumbsLeft.setOrientation(PALM_DOWN);
-  thumbsLeft.setFingerStates(EXTD,FLEX,FLEX,FLEX,FLEX);
-  thumbsLeft.assignDroneCommand(CMD_LEFT);
-  bank.push_back(thumbsLeft);
+        thumbsBack.setOrientation(FINGER_UP);
+        thumbsBack.setFingerStates(EXTD,FLEX,FLEX,FLEX,FLEX);
+        thumbsBack.assignDroneCommand(CMD_BACK);
+        bank.push_back(thumbsBack);
 
-  thumbsRight.setOrientation(PALM_UP);
-  thumbsRight.setFingerStates(EXTD,FLEX,FLEX,FLEX,FLEX);
-  thumbsRight.assignDroneCommand(CMD_RIGHT);
-  bank.push_back(thumbsRight);
+        thumbsLeft.setOrientation(PALM_DOWN);
+        thumbsLeft.setFingerStates(EXTD,FLEX,FLEX,FLEX,FLEX);
+        thumbsLeft.assignDroneCommand(CMD_LEFT);
+        bank.push_back(thumbsLeft);
 
-  std::sort(bank.begin(), bank.end());
-  
-  return bank;
-}
+        thumbsRight.setOrientation(PALM_UP);
+        thumbsRight.setFingerStates(EXTD,FLEX,FLEX,FLEX,FLEX);
+        thumbsRight.assignDroneCommand(CMD_RIGHT);
+        bank.push_back(thumbsRight);
 
-//  Establish Gesture Bank for Robot Selection
-std::vector<gesture> initializeSelectBank(){
-  std::vector<gesture> bank;
+        std::sort(bank.begin(), bank.end());
 
-  gesture oneGesture;
-  gesture twoGesture;
-  gesture threeGesture;
-  gesture fourGesture;
-  gesture thumbsDown;         //reject
-  gesture thumbsUp;           //select
-  
-  oneGesture.setFingerStates(FLEX,EXTD,FLEX,FLEX,FLEX);
-  oneGesture.addFingerStates(FLEX,FLEX,FLEX,FLEX,EXTD);
-  oneGesture.setOrientation(FINGER_UP);
-  oneGesture.setDroneID((uint8_t)1);
-  bank.push_back(oneGesture);
+        return bank;
+    }
 
-  twoGesture.setFingerStates(FLEX,EXTD,EXTD,FLEX,FLEX);
-  twoGesture.addFingerStates(FLEX,FLEX,FLEX,EXTD,EXTD);
-  twoGesture.setOrientation(FINGER_UP);
-  twoGesture.setDroneID((uint8_t)2);
-  bank.push_back(twoGesture);
+    //  Establish Gesture Bank for Robot Selection
+std::vector<gesture> initializeSelectBank()
+    {
+        std::vector<gesture> bank;
 
-  threeGesture.setFingerStates(FLEX, EXTD, EXTD, EXTD, FLEX);
-  threeGesture.addFingerStates(FLEX, FLEX, EXTD, EXTD, EXTD);
-  threeGesture.setOrientation(FINGER_UP);
-  threeGesture.setDroneID((uint8_t)3);
-  bank.push_back(threeGesture);
+        gesture oneGesture;
+        gesture twoGesture;
+        gesture threeGesture;
+        gesture fourGesture;
+        gesture thumbsDown;         //reject
+        gesture thumbsUp;           //select
 
-  fourGesture.setFingerStates(FLEX, EXTD, EXTD, EXTD, EXTD);
-  fourGesture.setOrientation(FINGER_UP);
-  fourGesture.setDroneID((uint8_t)4);
-  bank.push_back(fourGesture);
+        oneGesture.setFingerStates(FLEX,EXTD,FLEX,FLEX,FLEX);
+        oneGesture.addFingerStates(FLEX,FLEX,FLEX,FLEX,EXTD);
+        oneGesture.setOrientation(FINGER_UP);
+        oneGesture.setDroneID((uint8_t)1);
+        bank.push_back(oneGesture);
 
-  thumbsDown.setOrientation(THUMB_DOWN);
-  thumbsDown.setFingerStates(EXTD,FLEX,FLEX,FLEX,FLEX);
-  bank.push_back(thumbsDown);
-  
-  thumbsUp.setOrientation(THUMB_UP);
-  thumbsUp.setFingerStates(EXTD,FLEX,FLEX,FLEX,FLEX);
-  bank.push_back(thumbsUp);
+        twoGesture.setFingerStates(FLEX,EXTD,EXTD,FLEX,FLEX);
+        twoGesture.addFingerStates(FLEX,FLEX,FLEX,EXTD,EXTD);
+        twoGesture.setOrientation(FINGER_UP);
+        twoGesture.setDroneID((uint8_t)2);
+        bank.push_back(twoGesture);
 
-  std::sort(bank.begin(), bank.end());
-  
-  return bank;
-}
+        threeGesture.setFingerStates(FLEX, EXTD, EXTD, EXTD, FLEX);
+        threeGesture.addFingerStates(FLEX, FLEX, EXTD, EXTD, EXTD);
+        threeGesture.setOrientation(FINGER_UP);
+        threeGesture.setDroneID((uint8_t)3);
+        bank.push_back(threeGesture);
+
+        fourGesture.setFingerStates(FLEX, EXTD, EXTD, EXTD, EXTD);
+        fourGesture.setOrientation(FINGER_UP);
+        fourGesture.setDroneID((uint8_t)4);
+        bank.push_back(fourGesture);
+
+        thumbsDown.setOrientation(THUMB_DOWN);
+        thumbsDown.setFingerStates(EXTD,FLEX,FLEX,FLEX,FLEX);
+        bank.push_back(thumbsDown);
+
+        thumbsUp.setOrientation(THUMB_UP);
+        thumbsUp.setFingerStates(EXTD,FLEX,FLEX,FLEX,FLEX);
+        bank.push_back(thumbsUp);
+
+        std::sort(bank.begin(), bank.end());
+
+        return bank;
+    }
 
 //  The Node
 class GestureNode : public rclcpp::Node
 {
+
     public:
         GestureNode() : Node("gesture_node")
         {
-            //Creates bank of gestures
-            static std::vector<gesture> droneGestureBank = initializeCommandBank();
-            static std::vector<gesture> selectGestureBank = initializeSelectBank();
 
             //Initialize configuration for mode toggle gesture, The gesture is "Rock and Roll"
             toggle.setOrientation(FINGER_UP);
@@ -151,38 +151,40 @@ class GestureNode : public rclcpp::Node
 
             //Toggle between agent select and control mode
             //This toggle MUST BE DISABLED after a toggle until another command enables it
-            if(toggle.checkGesture(data) && !toggleLock){
-              mode_ = (mode_ == SELECT_MODE) ? CONTROL_MODE : SELECT_MODE;
-              toggleLock = true;  //locks the toggle until another gesture is done, this prevents repetitive calling of the toggle when the gesture is done by the user
+            if(toggle.checkGesture(data) && !toggleLock)
+            {
+                mode_ = (mode_ == PHASE_SELECTION) ? PHASE_CONTROL : PHASE_SELECTION;
+                toggleLock = true;  //locks the toggle until another gesture is done, this prevents repetitive calling of the toggle when the gesture is done by the user
             }
 
             //Select Phase Logic
-            else if(mode_ == PHASE_SELECTION){
-              std::vector<gesture>::iterator it = std::find_if(selectGestureBank.begin(), selectGestureBank.end(), [](const gesture& g){
-                  return g.checkGesture(data);   //equality condition, this checks if there is a matching ID with the gestures in the gesture bank
-              });
+            else if(mode_ == PHASE_SELECTION)
+            {
+                std::vector<gesture>::iterator it = std::find_if(selectGestureBank.begin(), selectGestureBank.end(), [data](const gesture& g){
+                    return g.checkGesture(data);   //equality condition, this checks if there is a matching ID with the gestures in the gesture bank
+            });
 
-              //WIP, FEB 23 (ralph)
+            //WIP, FEB 23 (ralph)
             }
 
             //Control Phase Logic
-            else if(mode_ == PHASE_CONTROL){
-              std::vector<gesture>::iterator it = std::find_if(droneGestureBank.begin(), droneGestureBank.end(), [](const gesture& g){
-                  return g.checkGesture(data);   //equality condition, this checks if there is a matching ID with the gestures in the gesture bank
-              });
-  
-              if(it != droneGestureBank.end()){
-                latest_cmd_ = (*it).getDroneCommand();
-              }
-  
-              else{  //Default Case
-                latest_cmd_ = CMD_INVALID;
-              }
+            else if(mode_ == PHASE_CONTROL)
+            {
+                std::vector<gesture>::iterator it = std::find_if(droneGestureBank.begin(), droneGestureBank.end(), [data](const gesture& g){
+                    return g.checkGesture(data); });  //equality condition, this checks if there is a matching ID with the gestures in the gesture bank
+                
+                if(it != droneGestureBank.end())
+                {
+                    latest_cmd_ = (*it).getDroneCommand();
+                }
+                else
+                {   //Default Case
+                    latest_cmd_ = CMD_INVALIDour
+                }
             }
 
             //  Log the calculation 
             RCLCPP_INFO(this->get_logger(), "Received: [%u], Result: %d", static_cast<unsigned int>(data), result);
-
             RCLCPP_INFO(this->get_logger(), "Published: %d", result);
         }
 
@@ -190,10 +192,12 @@ class GestureNode : public rclcpp::Node
         {
             std_msgs::msg::UInt8MultiArray gesture_msg;
             gesture_msg.data = {latest_agentid_, latest_cmd_}; 
+            if (can_Publish)
+            {
+                RCLCPP_INFO(this->get_logger(), "Published Gesture message. Message: Agent ID: %d, Command: %d", gesture_msg.data[0], gesture_msg.data[1]);
+                publisher_->publish(gesture_msg); 
+            }
 
-            RCLCPP_INFO(this->get_logger(), "Published Gesture message. Message: Agent ID: %d, Command: %d", gesture_msg.data[0], gesture_msg.data[1]);
-
-            publisher_->publish(gesture_msg); 
         }
         
         //  Subscriber and Publisher
@@ -202,18 +206,25 @@ class GestureNode : public rclcpp::Node
 
         // Timer
         rclcpp::TimerBase::SharedPtr timer_;
-
+        
+        //  Update these when a new command or new agent_id is chosen 
         uint8_t latest_agentid_ = 0;
         uint8_t latest_cmd_ = 0;
+        int result = 0;
+        int status = 0;
 
+        //  Glove Components 
         uint8_t selectedAgents;             //Buffer for agent select phase
 
         gesture toggle;                     //Toggle gesture for Select and Control Agent phases
         bool toggleLock;
-        phase mode_ = PHASE_SELECTION;      //Indicates what mode you are currently on. "phase" included in Glove.h
+        phase mode_ = PHASE_CONTROL;      //Indicates what mode you are currently on. "phase" included in Glove.h
+        bool can_Publish = false;
+                                          
+        //Creates bank of gestures
+        std::vector<gesture> droneGestureBank = initializeCommandBank();
+        std::vector<gesture> selectGestureBank = initializeSelectBank();
 
-        int result = 0;
-        int status = 0;
 };
 
 int main(int argc, char *argv[])
