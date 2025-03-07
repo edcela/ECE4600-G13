@@ -498,6 +498,7 @@ float Compute_PID(PID *pid)
 	if(outputPID > pid->max_output) outputPID = pid->max_output;
 	if(outputPID < pid->min_output) outputPID = pid->min_output;
 
+	//Print the values for troubleshooting
 	printf("Error: %.2f | P: %.2f | I: %.2f | D: %.2f | Output: %.2f\r\n", error, termP, termI, termD, outputPID);
 	printf("Setpoint: %.2f | Measured: %.2f | Error: %.2f\r\n", pid->setpoint, pid->measured_val, error);
 	printf("dt: %.6f\r\n", pid->dt);
