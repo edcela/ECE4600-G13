@@ -72,6 +72,7 @@ std::vector<gesture> initializeSelectBank()
         gesture fourGesture;
         gesture thumbsDown;         //reject
         gesture thumbsUp;           //select
+        gesture erase;                //clear selectedAgents
 
         oneGesture.setFingerStates(FLEX,EXTD,FLEX,FLEX,FLEX);
         oneGesture.addFingerStates(FLEX,FLEX,FLEX,FLEX,EXTD);
@@ -104,6 +105,11 @@ std::vector<gesture> initializeSelectBank()
         thumbsUp.setFingerStates(EXTD,FLEX,FLEX,FLEX,FLEX);
         bank.push_back(thumbsUp);
 
+        erase.setOrientation(FINGER_DOWN);
+        erase.setFingerStates(EXTD,FLEX,EXTD,EXTD,FLEX);
+        erase.addFingerStates(FLEX,FLEX,EXTD,EXTD,FLEX);
+        bank.push_back(erase);
+
         std::sort(bank.begin(), bank.end());
 
         return bank;
@@ -121,6 +127,9 @@ class GestureNode : public rclcpp::Node
             toggle.setOrientation(FINGER_UP);
             toggle.setFingerStates(FLEX,EXTD,FLEX,FLEX,EXTD);
             toggle.addFingerStates(EXTD,EXTD,FLEX,FLEX,EXTD);
+
+            toggleLock = false;
+            agentLock = false;
           
             //  Subscribe to the Glove Topic 
             subscription_ = this->create_subscription<std_msgs::msg::UInt8>
@@ -154,7 +163,13 @@ class GestureNode : public rclcpp::Node
             if(toggle.checkGesture(data) && !toggleLock)
             {
                 mode_ = (mode_ == PHASE_SELECTION) ? PHASE_CONTROL : PHASE_SELECTION;
-                toggleLock = true;  //locks the toggle until another gesture is done, this prevents repetitive calling of the toggle when the gesture is done by the user
+                toggleLock = true;  //locks the toggle until another gesture is done, this prevents repetitive calling when user does toggle gesture
+                if(mode_ == PHASE_SELECTION){
+                    RCLCPP_INFO(this->get_logger(), "Switching to Agent Select Mode");
+                }
+                else if(mode_ == PHASE_Control){
+                    RCLCPP_INFO(this->get_logger(), "Switching to Agent Control Mode");
+                }
             }
 
             //Select Phase Logic
@@ -162,11 +177,47 @@ class GestureNode : public rclcpp::Node
             {
                 std::vector<gesture>::iterator it = std::find_if(selectGestureBank.begin(), selectGestureBank.end(), [data](const gesture& g){
                     return g.checkGesture(data);   //equality condition, this checks if there is a matching ID with the gestures in the gesture bank
-            });
+                });
+                if(it != selectGestureBank.end()){
+                    //Case 1: Thumbs up -> update latest_agentid_ with selectedAgents
+                    if(it->getGestureID() == 0b00001010){
+                        RCLCPP_INFO(this->get_logger(), "Agent %d added to controlled agents!", selectedAgent);
+                        latest_agentid_ |= selectedAgent;    //update latest_agentid_
+                        selectedAgent = 0;                    //reset selectedAgents back to 0
+                        agentLock = false;
+                    }
+                    
+                    //Case 2: Thumbs down -> update latest_agentid_ so selectedAgents are toggled off
+                    if(it->getGestureID() == 0b00001101){
+                        RCLCPP_INFO(this->get_logger(), "Agent %d removed from controlled agents!", selectedAgent);
+                        latest_agentid_ &= ~selectedAgent;    //Toggle off selected agents, needs to be checked
+                        selectedAgent = 0;
+                        agentLock = false;
+                    }
 
-            //WIP, FEB 23 (ralph)
+                    //Case 3: This weird gesture basically opposite of rock and roll gesture -> resets selectedAgent
+                    if(it->getGestureID() == 0b01101110){
+                        RCLCPP_INFO(this->get_logger(), "Selected agents cleared");
+                        selectedAgent = 0;
+                        agentLock = false;
+                    }
+                        
+                    //Case 4: Numbers -> update selectedAgents for that corresponding number
+                    else{
+                        if(!agentLock){
+                            selectedAgent = it->getDroneID();    //potential error, potential solution: dereference the iterator (*it)
+                            agentLock = true;
+                            RCLCPP_INFO(this->get_logger(), "Agent %u selected",selectedAgent);
+                        }
+                        else{
+                            RCLCPP_INFO(this->get_logger(), "Confirm what you want to do with Agent %u first!",selectedAgent);
+                        }
+                    }
+
+                toggleLock = false;    //resets toggleLock
+                }
             }
-
+            
             //Control Phase Logic
             else if(mode_ == PHASE_CONTROL)
             {
@@ -175,11 +226,12 @@ class GestureNode : public rclcpp::Node
                 
                 if(it != droneGestureBank.end())
                 {
-                    latest_cmd_ = (*it).getDroneCommand();
+                    latest_cmd_ = it->getDroneCommand();    //potential error, potential solution: dereference the iterator (*it)
+                    toggleLock = false;
                 }
                 else
-                {   //Default Case
-                    latest_cmd_ = CMD_INVALIDour
+                {   //Default Case, for rc, CMD_INVALID should equal stop
+                    latest_cmd_ = CMD_INVALID;
                 }
             }
 
@@ -192,7 +244,7 @@ class GestureNode : public rclcpp::Node
         {
             std_msgs::msg::UInt8MultiArray gesture_msg;
             gesture_msg.data = {latest_agentid_, latest_cmd_}; 
-            if (can_Publish)
+            if (mode_ == PHASE_CONTROL)
             {
                 RCLCPP_INFO(this->get_logger(), "Published Gesture message. Message: Agent ID: %d, Command: %d", gesture_msg.data[0], gesture_msg.data[1]);
                 publisher_->publish(gesture_msg); 
@@ -214,12 +266,14 @@ class GestureNode : public rclcpp::Node
         int status = 0;
 
         //  Glove Components 
-        uint8_t selectedAgents;             //Buffer for agent select phase
+        uint8_t selectedAgent;             //Buffer for agent select phase
 
         gesture toggle;                     //Toggle gesture for Select and Control Agent phases
         bool toggleLock;
-        phase mode_ = PHASE_CONTROL;      //Indicates what mode you are currently on. "phase" included in Glove.h
-        bool can_Publish = false;
+        bool agentLock;                    //So that you have to confirm a selected agent before being able to select another
+
+        phase mode_ = PHASE_SELECTION;      //Indicates what mode you are currently on. "phase" included in Glove.h
+        //bool can_Publish = false;
                                           
         //Creates bank of gestures
         std::vector<gesture> droneGestureBank = initializeCommandBank();
