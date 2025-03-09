@@ -14,8 +14,7 @@
 #define RX_PIN 16 //  Pin 4
 #define UART_BAUD_RATE 115200
 #define ALL_AGENTS 0
-#define AGENT_1 1
-#define AGENT_2 2
+#define AGENT_ID 0b00000001    //Change this to whatever bit this bot is assigned for
 
 HardwareSerial agentSerial(1);
 
@@ -49,7 +48,10 @@ void subscription_callback(const void *msg_in)
     delay(200);
 
     //    CHANGE THIS TO WORK WITH THE BITWISE
-    if (msg->data.data[0] == 0 || msg->data.data[0] == 1)
+    int IDCheck = 0;
+    IDCheck = AGENT_ID & data[0];
+    
+    if (msg->data.data[0] == 0 || IDCheck != 0)
     {
       Serial.println("Agent will send: ");
       //Serial.print(msg->data.data[1]);
