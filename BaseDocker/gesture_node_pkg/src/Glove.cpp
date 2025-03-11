@@ -142,11 +142,11 @@ bool gesture::checkGesture(uint8_t currentGesture) const {
 
 //this is used for sorting gestures in a set
 bool gesture::operator < (const gesture& otherGesture) const {
-    return gestureID < otherGesture.getGestureID();
+    return gesturePriority < otherGesture.gesturePriority;
 }
 
 bool gesture::operator > (const gesture& otherGesture) const {
-    return gestureID > otherGesture.getGestureID();
+    return gesturePriority > otherGesture.gesturePriority;
 }
 
 bool gesture::operator == (const gesture& otherGesture) const {
