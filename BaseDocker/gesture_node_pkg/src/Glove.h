@@ -106,7 +106,7 @@ private:
 class gesture {
 public:
     //Create a gesture object with a name and a set of finger states.
-    int gesturePriority;
+    int gesturePriority = 1;
 
     gesture();
     ~gesture();       //deconstructor
