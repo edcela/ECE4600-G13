@@ -106,6 +106,8 @@ private:
 class gesture {
 public:
     //Create a gesture object with a name and a set of finger states.
+    int gesturePriority;
+
     gesture();
     ~gesture();       //deconstructor
 
@@ -150,8 +152,6 @@ private:
     uint8_t orientation;        //This is the base orientation of the gesture (the first orientation added)
     bool multipleOrientations;
     std::vector<uint8_t> allowedOrientations;
-
-    int gesturePriority;
 };
 
 #endif // GLOVE_H
