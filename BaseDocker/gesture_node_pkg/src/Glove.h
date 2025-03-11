@@ -150,6 +150,8 @@ private:
     uint8_t orientation;        //This is the base orientation of the gesture (the first orientation added)
     bool multipleOrientations;
     std::vector<uint8_t> allowedOrientations;
+
+    int gesturePriority;
 };
 
 #endif // GLOVE_H
