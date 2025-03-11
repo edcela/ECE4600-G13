@@ -35,10 +35,16 @@ uint8_t gesture::getGestureID() const {
 void gesture::setOrientation(uint8_t inputOrientation){
     gestureID = (gestureID & 0xF8) | inputOrientation;           //clear last 3 bits
     orientation = inputOrientation;
+        if(gesturePriority >= 1){
+                gesturePriority = 0;
+        }
 }
 
 //If a gesture is valid for multiple SPECIFIC BUT NOT ALL orientations, add them using this function.
 void gesture::addOrientation(uint8_t inputOrientation){
+        if(gesturePriority >= 1){
+                gesturePriority = 0;
+        }
     if(!multipleOrientations){
         multipleOrientations = true;
         allowedOrientations = {orientation, inputOrientation};
