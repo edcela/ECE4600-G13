@@ -73,28 +73,29 @@ std::vector<gesture> initializeSelectBank()
         gesture thumbsDown;         //reject
         gesture thumbsUp;           //select
         gesture erase;                //clear selectedAgents
+        gesture call;                //check what agents are currently selected
 
         oneGesture.setFingerStates(FLEX,EXTD,FLEX,FLEX,FLEX);
         oneGesture.addFingerStates(FLEX,FLEX,FLEX,FLEX,EXTD);
         oneGesture.setOrientation(FINGER_UP);
-        oneGesture.setDroneID((uint8_t)1);
+        oneGesture.setDroneID(0b00000001);
         bank.push_back(oneGesture);
 
         twoGesture.setFingerStates(FLEX,EXTD,EXTD,FLEX,FLEX);
         twoGesture.addFingerStates(FLEX,FLEX,FLEX,EXTD,EXTD);
         twoGesture.setOrientation(FINGER_UP);
-        twoGesture.setDroneID((uint8_t)2);
+        twoGesture.setDroneID(0b00000010);
         bank.push_back(twoGesture);
 
         threeGesture.setFingerStates(FLEX, EXTD, EXTD, EXTD, FLEX);
         threeGesture.addFingerStates(FLEX, FLEX, EXTD, EXTD, EXTD);
         threeGesture.setOrientation(FINGER_UP);
-        threeGesture.setDroneID((uint8_t)3);
+        threeGesture.setDroneID(0b00000100);
         bank.push_back(threeGesture);
 
         fourGesture.setFingerStates(FLEX, EXTD, EXTD, EXTD, EXTD);
         fourGesture.setOrientation(FINGER_UP);
-        fourGesture.setDroneID((uint8_t)4);
+        fourGesture.setDroneID(0b00001000);
         bank.push_back(fourGesture);
 
         thumbsDown.setOrientation(THUMB_DOWN);
@@ -110,6 +111,9 @@ std::vector<gesture> initializeSelectBank()
         erase.addFingerStates(FLEX,FLEX,EXTD,EXTD,FLEX);
         bank.push_back(erase);
 
+        call.setFingerStates(EXTD,FLEX,FLEX,FLEX,EXTD);
+        bank.push_back(call);
+        
         std::sort(bank.begin(), bank.end());
 
         return bank;
@@ -178,9 +182,10 @@ class GestureNode : public rclcpp::Node
                 std::vector<gesture>::iterator it = std::find_if(selectGestureBank.begin(), selectGestureBank.end(), [data](const gesture& g){
                     return g.checkGesture(data);   //equality condition, this checks if there is a matching ID with the gestures in the gesture bank
                 });
+                
                 if(it != selectGestureBank.end()){
                     //Case 1: Thumbs up -> update latest_agentid_ with selectedAgents
-                    if(it->getGestureID() == 0b00001010){
+                    if(it->checkGesture(0b00001010)){
                         RCLCPP_INFO(this->get_logger(), "Agent %d added to controlled agents!", selectedAgent);
                         latest_agentid_ |= selectedAgent;    //update latest_agentid_
                         selectedAgent = 0;                    //reset selectedAgents back to 0
@@ -188,29 +193,60 @@ class GestureNode : public rclcpp::Node
                     }
                     
                     //Case 2: Thumbs down -> update latest_agentid_ so selectedAgents are toggled off
-                    if(it->getGestureID() == 0b00001101){
+                    else if(it->checkGesture(0b00001101)){
                         RCLCPP_INFO(this->get_logger(), "Agent %d removed from controlled agents!", selectedAgent);
                         latest_agentid_ &= ~selectedAgent;    //Toggle off selected agents, needs to be checked
                         selectedAgent = 0;
                         agentLock = false;
                     }
 
-                    //Case 3: This weird gesture basically opposite of rock and roll gesture -> resets selectedAgent
-                    if(it->getGestureID() == 0b01101110){
+                    //Case 3: Clear case, makes it so all agents are selected i.e. latest_agent_id_ = 0
+                    else if(it->checkGesture(0b00001010)){
                         RCLCPP_INFO(this->get_logger(), "Selected agents cleared");
-                        selectedAgent = 0;
+                        latest_agentid_ = 0;
                         agentLock = false;
                     }
+
+                    //Case 4: Check command which lets the user see which agents are currently selected
+                    //basically a print command for latest_agentid_
+                    else if(it->checkGesture(0b00011000)){
+                        RCLCPP_INFO(this->get_logger(), "Current agents selected are:");                        
+                        for(int i = 0; i < 8, i++){
+                            int bitChecker = latest_agentid_ << i;
+
+                            if((bitChecker%10)==1){
+                                RCLCPP_INFO(this->get_logger(), "Agent %d", i+1);
+                            }
+                        }
+                    }
                         
-                    //Case 4: Numbers -> update selectedAgents for that corresponding number
-                    else{
+                    //Case 5: Numbers -> update selectedAgents for that corresponding number
+                    else if(it->checkGesture(0b10000001) ||    //one
+                        it->checkGesture(0b11000001) ||        //two
+                        it->checkGesture(0b11100001) ||        //three
+                        it->checkGesture(0b11110001)){        //four
+                        
+                        //Case 5.1: If the agent lock is not enganged, an agent can be selected
                         if(!agentLock){
-                            selectedAgent = it->getDroneID();    //potential error, potential solution: dereference the iterator (*it)
+                            selectedAgent = it->getDroneID();
                             agentLock = true;
                             RCLCPP_INFO(this->get_logger(), "Agent %u selected",selectedAgent);
                         }
+
+                        //Case 5.2: If the agent lock is engaged, then the user must tell program what to do with the currently selected agent
                         else{
-                            RCLCPP_INFO(this->get_logger(), "Confirm what you want to do with Agent %u first!",selectedAgent);
+                            int selectedAgentAsInt;
+                            
+                            for(int i = 0; i < 8, i++){
+                                int bitChecker = latest_agentid_ << i;
+
+                                if((bitChecker%10)==1){
+                                    i = 8;
+                                    selectedAgentAsInt = i+1;
+                                }
+                            }
+                        
+                            RCLCPP_INFO(this->get_logger(), "Confirm what you want to do with Agent %u first!",selectedAgentAsInt);
                         }
                     }
 
@@ -223,12 +259,14 @@ class GestureNode : public rclcpp::Node
             {
                 std::vector<gesture>::iterator it = std::find_if(droneGestureBank.begin(), droneGestureBank.end(), [data](const gesture& g){
                     return g.checkGesture(data); });  //equality condition, this checks if there is a matching ID with the gestures in the gesture bank
-                
+
+                //Case for when a command is found, latest_cmd_ will be updated to the current command
                 if(it != droneGestureBank.end())
                 {
-                    latest_cmd_ = it->getDroneCommand();    //potential error, potential solution: dereference the iterator (*it)
+                    latest_cmd_ = it->getDroneCommand();
                     toggleLock = false;
                 }
+                
                 else
                 {   //Default Case, for rc, CMD_INVALID should equal stop
                     latest_cmd_ = CMD_INVALID;
