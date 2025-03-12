@@ -73,29 +73,28 @@ std::vector<gesture> initializeSelectBank()
         gesture thumbsDown;         //reject
         gesture thumbsUp;           //select
         gesture erase;                //clear selectedAgents
-        gesture call;                //check what agents are currently selected
 
         oneGesture.setFingerStates(FLEX,EXTD,FLEX,FLEX,FLEX);
         oneGesture.addFingerStates(FLEX,FLEX,FLEX,FLEX,EXTD);
         oneGesture.setOrientation(FINGER_UP);
-        oneGesture.setDroneID(0b00000001);
+        oneGesture.setDroneID((uint8_t)1);
         bank.push_back(oneGesture);
 
         twoGesture.setFingerStates(FLEX,EXTD,EXTD,FLEX,FLEX);
         twoGesture.addFingerStates(FLEX,FLEX,FLEX,EXTD,EXTD);
         twoGesture.setOrientation(FINGER_UP);
-        twoGesture.setDroneID(0b00000010);
+        twoGesture.setDroneID((uint8_t)2);
         bank.push_back(twoGesture);
 
         threeGesture.setFingerStates(FLEX, EXTD, EXTD, EXTD, FLEX);
         threeGesture.addFingerStates(FLEX, FLEX, EXTD, EXTD, EXTD);
         threeGesture.setOrientation(FINGER_UP);
-        threeGesture.setDroneID(0b00000100);
+        threeGesture.setDroneID((uint8_t)3);
         bank.push_back(threeGesture);
 
         fourGesture.setFingerStates(FLEX, EXTD, EXTD, EXTD, EXTD);
         fourGesture.setOrientation(FINGER_UP);
-        fourGesture.setDroneID(0b00001000);
+        fourGesture.setDroneID((uint8_t)4);
         bank.push_back(fourGesture);
 
         thumbsDown.setOrientation(THUMB_DOWN);
@@ -111,19 +110,19 @@ std::vector<gesture> initializeSelectBank()
         erase.addFingerStates(FLEX,FLEX,EXTD,EXTD,FLEX);
         bank.push_back(erase);
 
-        call.setFingerStates(EXTD,FLEX,FLEX,FLEX,EXTD);
-        bank.push_back(call);
-        
         std::sort(bank.begin(), bank.end());
 
         return bank;
     }
 
-//  The Node
+//  GestureNode Class 
+//  
+//      The ROS node based off the rclcpp::Node 
 class GestureNode : public rclcpp::Node
 {
-
+    
     public:
+        //  Constructor for Gesture Node 
         GestureNode() : Node("gesture_node")
         {
 
@@ -134,8 +133,18 @@ class GestureNode : public rclcpp::Node
 
             toggleLock = false;
             agentLock = false;
-          
-            //  Subscribe to the Glove Topic 
+
+            /*
+             * Subscribe to the Glove Topic 
+             *  
+             *  Type: UInt8: Unsigned 8-bit Integer 
+             *
+             *  This will create the ROS subscription with a ROS standard message type of UInt8.
+             *  The topic it will subscribe to is called: /esp32_glove
+             *  No timer since it will just respond when new data is published to this topic 
+             *  Lastly it is binded to the listener_callback function 
+             *  10 refers to the message queue size 
+             */ 
             subscription_ = this->create_subscription<std_msgs::msg::UInt8>
             (
                 "/esp32_glove",
@@ -143,20 +152,43 @@ class GestureNode : public rclcpp::Node
                 std::bind(&GestureNode::listener_callback, this, std::placeholders::_1)
             );
 
-            //  Publish to the Drone Topic
+            /*
+             * Publish to the Drone Topic
+             *  
+             *  Type: UInt8MultiArray: Multi Array of Unsigned 8-bit Integer
+             *
+             *  This will create a ROS publisher with a ROS standard message type of UInt8MultiArray.
+             *  The topic it will publish to is called: /esp32_drone 
+             *  Timer is used here since we want to publish at a rate of 500ms 
+             *  This means that the timer will be binded to the publish_msg function
+             *  10 refers to the message queue size 
+             */ 
             publisher_ = this->create_publisher<std_msgs::msg::UInt8MultiArray>("/esp32_drone", 10);
 
             // Timer: Publishing the telemetry message every second
             timer_ = this->create_wall_timer(
                 500ms,  // 500 ms
                 std::bind(&GestureNode::publish_msg, this));
-
+            
+            //  Log and print that the GestureNode has been initialized 
             RCLCPP_INFO(this->get_logger(), "GestureNode node has been started.");
         }
 
 
     private:
-        //  Listerner Callback Function
+
+        /*
+         * listener_callback() Function
+         *  
+         *  Parameters: 
+         *      - std::msg::UInt8::SharedPtr msg - This is the message that is taken from topic /esp32_glove
+         *
+         *  This function will access the data message taken from the topic /esp32_glove and then process it to determine
+         *  both the command and robotic agent ID. It does this through 2 phases, a PHASE_SELECTION and PHASE_CONTROL.
+         *  PHASE_SELECTION is responsible for determining which robotic agent ID is being controlled or should be sent 
+         *  the commands, which will update latest_agentid_.
+         *  PHASE_CONTROL is responsible for determining the command itself, which will update latest_cmd_.
+         */ 
         void listener_callback(const std_msgs::msg::UInt8::SharedPtr msg)
         {
             //  Access the data from the received message 
@@ -171,7 +203,7 @@ class GestureNode : public rclcpp::Node
                 if(mode_ == PHASE_SELECTION){
                     RCLCPP_INFO(this->get_logger(), "Switching to Agent Select Mode");
                 }
-                else if(mode_ == PHASE_Control){
+                else if(mode_ == PHASE_CONTROL){
                     RCLCPP_INFO(this->get_logger(), "Switching to Agent Control Mode");
                 }
             }
@@ -210,7 +242,7 @@ class GestureNode : public rclcpp::Node
                     //basically a print command for latest_agentid_
                     else if(it->checkGesture(0b00011000)){
                         RCLCPP_INFO(this->get_logger(), "Current agents selected are:");                        
-                        for(int i = 0; i < 8, i++){
+                        for(int i = 0; i < 8; i++){
                             int bitChecker = latest_agentid_ << i;
 
                             if((bitChecker%10)==1){
@@ -236,7 +268,7 @@ class GestureNode : public rclcpp::Node
                         else{
                             int selectedAgentAsInt;
                             
-                            for(int i = 0; i < 8, i++){
+                            for(int i = 0; i < 8; i++){
                                 int bitChecker = latest_agentid_ << i;
 
                                 if((bitChecker%10)==1){
@@ -258,14 +290,12 @@ class GestureNode : public rclcpp::Node
             {
                 std::vector<gesture>::iterator it = std::find_if(droneGestureBank.begin(), droneGestureBank.end(), [data](const gesture& g){
                     return g.checkGesture(data); });  //equality condition, this checks if there is a matching ID with the gestures in the gesture bank
-
-                //Case for when a command is found, latest_cmd_ will be updated to the current command
+                
                 if(it != droneGestureBank.end())
                 {
-                    latest_cmd_ = it->getDroneCommand();
+                    latest_cmd_ = it->getDroneCommand();    //potential error, potential solution: dereference the iterator (*it)
                     toggleLock = false;
                 }
-                
                 else
                 {   //Default Case, for rc, CMD_INVALID should equal stop
                     latest_cmd_ = CMD_INVALID;
@@ -273,10 +303,18 @@ class GestureNode : public rclcpp::Node
             }
 
             //  Log the calculation 
-            RCLCPP_INFO(this->get_logger(), "Received: [%u], Result: %d", static_cast<unsigned int>(data), result);
-            RCLCPP_INFO(this->get_logger(), "Published: %d", result);
+            RCLCPP_INFO(this->get_logger(), "Received: [%u]", static_cast<unsigned int>(data));
+            //RCLCPP_INFO(this->get_logger(), "Published: %d", result);
         }
-
+        
+        /*
+         * publish_msg() Function 
+         *
+         *  No Parameters
+         *
+         *  This function has one purpose to gather latest_cmd_ and latest_agentid_, put into a UInt8MultiArray type 
+         *  and publish it only when the mode is in PHASE_CONTROL.
+         */ 
         void publish_msg()
         {
             std_msgs::msg::UInt8MultiArray gesture_msg;
@@ -286,7 +324,6 @@ class GestureNode : public rclcpp::Node
                 RCLCPP_INFO(this->get_logger(), "Published Gesture message. Message: Agent ID: %d, Command: %d", gesture_msg.data[0], gesture_msg.data[1]);
                 publisher_->publish(gesture_msg); 
             }
-
         }
         
         //  Subscriber and Publisher
