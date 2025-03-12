@@ -347,13 +347,13 @@ void Handle_Input()
 		case 0:
 			command = CMD_STOP;
 			break;
-		case 1:
+		case 5:
 			command = CMD_FORWARD;
 			break;
-		case 2:
+		case 3:
 			command = CMD_LEFT;
 			break;
-		case 3:
+		case 4:
 			command = CMD_RIGHT;
 			break;
 		default:
