@@ -155,13 +155,14 @@ bool gesture::operator == (const gesture& otherGesture) const {
 
 //removes all gesture information
 void gesture::clearGesture(){
-    gestureID = 0;
-    flexion = 0;
-    orientation = 0;
+//    gestureID = 0;
+//    flexion = 0;
+//    orientation = 0;
 
     assignedDroneCommand = CMD_INVALID;
-    multipleFlexionStates = false;
-    multipleOrientations = false;
+        droneID = 0;
+//    multipleFlexionStates = false;
+//    multipleOrientations = false;
 
     allowedFlexionStates.clear();
     allowedOrientations.clear();
