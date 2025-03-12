@@ -204,7 +204,6 @@ class GestureNode : public rclcpp::Node
                     else if(it->checkGesture(0b00001010)){
                         RCLCPP_INFO(this->get_logger(), "Selected agents cleared");
                         latest_agentid_ = 0;
-                        agentLock = false;
                     }
 
                     //Case 4: Check command which lets the user see which agents are currently selected
