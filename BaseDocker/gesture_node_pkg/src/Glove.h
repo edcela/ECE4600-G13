@@ -20,13 +20,6 @@
 #define FLEX 0x00
 #define EXTD 0x01
 
-// Defines for drone identifiers
-#define DRN_1 0b00000001
-#define DRN_2 0b00000010
-#define DRN_3 0b00000100
-#define DRN_4 0b00001000
-#define DRN_5 0b00010000
-
 //Commands for controlling the drone
 typedef enum : uint8_t {
     CMD_LEFT                = 3,
@@ -106,21 +99,19 @@ private:
 class gesture {
 public:
     //Create a gesture object with a name and a set of finger states.
-    int gesturePriority = 1;
-
     gesture();
     ~gesture();       //deconstructor
 
     void updateID(uint8_t ID);
-    uint8_t getGestureID() const;    //Get the sensor data of the gesture
+    //uint8_t getGestureID() const;    //Get the sensor data of the gesture
 
-    void setOrientation(uint8_t inputOrientation);    //Set the BASE orientation to be used for IDing a gesture.
+    //void setOrientation(uint8_t inputOrientation);    //Set the BASE orientation to be used for IDing a gesture.
     void addOrientation(uint8_t inputOrientation);    //If a gesture is valid for multiple SPECIFIC BUT NOT ALL orientations, add them using this function.
-    uint8_t getOrientation() const;    //Returns the orientation of the gesture. If multiple orientations are allowed, only the first orientation is returned.
+    //uint8_t getOrientation() const;    //Returns the orientation of the gesture. If multiple orientations are allowed, only the first orientation is returned.
 
-    void setFingerStates(uint8_t thumb, uint8_t index, uint8_t middle, uint8_t ring, uint8_t pinky);    //Set the flexion states of the fingers for this gesture. The order is thumb, index, middle, ring, pinky.
+    //void setFingerStates(uint8_t thumb, uint8_t index, uint8_t middle, uint8_t ring, uint8_t pinky);    //Set the flexion states of the fingers for this gesture. The order is thumb, index, middle, ring, pinky.
     void addFingerStates(uint8_t thumb, uint8_t index, uint8_t middle, uint8_t ring, uint8_t pinky);    //If a gesture requires multiple possible finger states, add them using this function.
-    uint8_t getFingerStates() const;    //Returns flexion states. As in the gestureID of this gesture with orientation omitted.
+    //uint8_t getFingerStates() const;    //Returns flexion states. As in the gestureID of this gesture with orientation omitted.
 
     void assignDroneCommand(DroneCommand command); //Assigns a specific command to the gesture. Only one command is allowed.
     DroneCommand getDroneCommand () const;
@@ -140,18 +131,15 @@ public:
     void clearCommand();
 
 private:
-    uint8_t gestureID;                  //Sensor data formatted such that the first 5 bits are the finger states and the last 3 bits are the hand orientation
+    //uint8_t gestureID;                  //Sensor data formatted such that the first 5 bits are the finger states and the last 3 bits are the hand orientation
     DroneCommand assignedDroneCommand;  //The DRONE command that is assigned to the gesture
     bool assignedDroneSelect;
     uint8_t droneID;                        //Corresponding drone ID for this gesture
 
-    uint8_t flexion;
-    bool multipleFlexionStates;
     std::vector<uint8_t> allowedFlexionStates;
-    
-    uint8_t orientation;        //This is the base orientation of the gesture (the first orientation added)
-    bool multipleOrientations;
     std::vector<uint8_t> allowedOrientations;
+
+    int gesturePriority = 1;
 };
 
 #endif // GLOVE_H
