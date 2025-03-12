@@ -57,10 +57,10 @@ typedef enum {
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
 #define MOTOR_START_SPEED 0				//Motor Speed at Initialization (Max. 2000)
-#define MOTOR_DESCEND_SPEED 50			//Motor speed to use when descending (Max. 2000)
-#define MOTOR_ASCEND_SPEED 100			//Motor speed to use when ascending (Max. 2000)
-#define MOTOR_DIRECTION_DECREASE 0	 	//Lower motor speed to use when moving in a lateral direction (Max. 2000)
-#define MOTOR_DIRECTION_INCREASE 100	//Higher motor speed to use when moving in a lateral direction (Max. 2000)
+#define MOTOR_DESCEND_SPEED 100			//Motor speed to use when descending (Max. 2000)
+#define MOTOR_ASCEND_SPEED 350			//Motor speed to use when ascending (Max. 2000)
+#define MOTOR_DIRECTION_DECREASE 180	 	//Lower motor speed to use when moving in a lateral direction (Max. 2000)
+#define MOTOR_DIRECTION_INCREASE 220	//Higher motor speed to use when moving in a lateral direction (Max. 2000)
 #define MOTOR_HOVER_SPEED 200			//Motor speed to use for hovering (Max. 2000)
 
 #define MPU6500_ADDR 0xD0				//MPU6500 I2C Address (AD0 = 0)
@@ -227,10 +227,10 @@ int main(void)
 	  pitch_output = (int16_t)Compute_PID(&pid_pitch);
 
 	  Handle_Input();
-	  motor_speeds[0] = motor_speeds[0] + roll_output - pitch_output;
-	  motor_speeds[1] = motor_speeds[1] + roll_output + pitch_output;
-	  motor_speeds[2] = motor_speeds[2] - roll_output + pitch_output;
-	  motor_speeds[3] = motor_speeds[3] - roll_output - pitch_output;
+	  motor_speeds[0] = motor_speeds[0] + roll_output;// - pitch_output;
+	  motor_speeds[1] = motor_speeds[1] + roll_output;// + pitch_output;
+	  motor_speeds[2] = motor_speeds[2] - roll_output;// + pitch_output;
+	  motor_speeds[3] = motor_speeds[3] - roll_output;// - pitch_output;
 	  Update_Motors();
 
 //	  print_PID_data(roll_output,pitch_output);
@@ -499,9 +499,9 @@ float Compute_PID(PID *pid)
 	if(outputPID < pid->min_output) outputPID = pid->min_output;
 
 	//Print the values for troubleshooting
-	printf("Error: %.2f | P: %.2f | I: %.2f | D: %.2f | Output: %.2f\r\n", error, termP, termI, termD, outputPID);
-	printf("Setpoint: %.2f | Measured: %.2f | Error: %.2f\r\n", pid->setpoint, pid->measured_val, error);
-	printf("dt: %.6f\r\n", pid->dt);
+//	printf("Error: %.2f | P: %.2f | I: %.2f | D: %.2f | Output: %.2f\r\n", error, termP, termI, termD, outputPID);
+//	printf("Setpoint: %.2f | Measured: %.2f | Error: %.2f\r\n", pid->setpoint, pid->measured_val, error);
+//	printf("dt: %.6f\r\n", pid->dt);
 
 	return outputPID;
 }
