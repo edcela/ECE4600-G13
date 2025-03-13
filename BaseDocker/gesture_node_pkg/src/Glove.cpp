@@ -149,9 +149,11 @@ bool gesture::operator > (const gesture& otherGesture) const {
     return gesturePriority > otherGesture.gesturePriority;
 }
 
+/*
 bool gesture::operator == (const gesture& otherGesture) const {
     return checkGesture(otherGesture.getGestureID());
 }
+*/
 
 //removes all gesture information
 void gesture::clearGesture(){
