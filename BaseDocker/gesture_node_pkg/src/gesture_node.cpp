@@ -24,35 +24,35 @@ std::vector<gesture> initializeCommandBank()
         gesture thumbsLeft;         //drone go left
         gesture thumbsRight;        //drone go right
 
-        pointUp.setOrientation(FINGER_UP);
-        pointUp.setFingerStates(FLEX,EXTD,FLEX,FLEX,FLEX);
+        pointUp.addOrientation(FINGER_UP);
+        pointUp.addFingerStates(FLEX,EXTD,FLEX,FLEX,FLEX);
         pointUp.assignDroneCommand(CMD_ASCEND);
         bank.push_back(pointUp);
 
-        pointDown.setOrientation(FINGER_DOWN);
-        pointDown.setFingerStates(FLEX,EXTD,FLEX,FLEX,FLEX);
+        pointDown.addOrientation(FINGER_DOWN);
+        pointDown.addFingerStates(FLEX,EXTD,FLEX,FLEX,FLEX);
         pointDown.assignDroneCommand(CMD_DESCEND);
         bank.push_back(pointDown);
 
-        pointForward.setOrientation(THUMB_UP);
+        pointForward.addOrientation(THUMB_UP);
         pointForward.addOrientation(PALM_UP);
         pointForward.addOrientation(PALM_DOWN);
-        pointForward.setFingerStates(FLEX,EXTD,FLEX,FLEX,FLEX);
+        pointForward.addFingerStates(FLEX,EXTD,FLEX,FLEX,FLEX);
         pointForward.assignDroneCommand(CMD_FORWARD);
         bank.push_back(pointForward);
 
-        thumbsBack.setOrientation(FINGER_UP);
-        thumbsBack.setFingerStates(EXTD,FLEX,FLEX,FLEX,FLEX);
+        thumbsBack.addOrientation(FINGER_UP);
+        thumbsBack.addFingerStates(EXTD,FLEX,FLEX,FLEX,FLEX);
         thumbsBack.assignDroneCommand(CMD_BACK);
         bank.push_back(thumbsBack);
 
-        thumbsLeft.setOrientation(PALM_DOWN);
-        thumbsLeft.setFingerStates(EXTD,FLEX,FLEX,FLEX,FLEX);
+        thumbsLeft.addOrientation(PALM_DOWN);
+        thumbsLeft.addFingerStates(EXTD,FLEX,FLEX,FLEX,FLEX);
         thumbsLeft.assignDroneCommand(CMD_LEFT);
         bank.push_back(thumbsLeft);
 
-        thumbsRight.setOrientation(PALM_UP);
-        thumbsRight.setFingerStates(EXTD,FLEX,FLEX,FLEX,FLEX);
+        thumbsRight.addOrientation(PALM_UP);
+        thumbsRight.addFingerStates(EXTD,FLEX,FLEX,FLEX,FLEX);
         thumbsRight.assignDroneCommand(CMD_RIGHT);
         bank.push_back(thumbsRight);
 
@@ -72,43 +72,47 @@ std::vector<gesture> initializeSelectBank()
         gesture fourGesture;
         gesture thumbsDown;         //reject
         gesture thumbsUp;           //select
-        gesture erase;                //clear selectedAgents
+        gesture erase;                //clear selectedAgentAsInt
+        gesture call;
 
-        oneGesture.setFingerStates(FLEX,EXTD,FLEX,FLEX,FLEX);
+        oneGesture.addFingerStates(FLEX,EXTD,FLEX,FLEX,FLEX);
         oneGesture.addFingerStates(FLEX,FLEX,FLEX,FLEX,EXTD);
-        oneGesture.setOrientation(FINGER_UP);
+        oneGesture.addOrientation(FINGER_UP);
         oneGesture.setDroneID((uint8_t)1);
         bank.push_back(oneGesture);
 
-        twoGesture.setFingerStates(FLEX,EXTD,EXTD,FLEX,FLEX);
+        twoGesture.addFingerStates(FLEX,EXTD,EXTD,FLEX,FLEX);
         twoGesture.addFingerStates(FLEX,FLEX,FLEX,EXTD,EXTD);
-        twoGesture.setOrientation(FINGER_UP);
+        twoGesture.addOrientation(FINGER_UP);
         twoGesture.setDroneID((uint8_t)2);
         bank.push_back(twoGesture);
 
-        threeGesture.setFingerStates(FLEX, EXTD, EXTD, EXTD, FLEX);
+        threeGesture.addFingerStates(FLEX, EXTD, EXTD, EXTD, FLEX);
         threeGesture.addFingerStates(FLEX, FLEX, EXTD, EXTD, EXTD);
-        threeGesture.setOrientation(FINGER_UP);
+        threeGesture.addOrientation(FINGER_UP);
         threeGesture.setDroneID((uint8_t)3);
         bank.push_back(threeGesture);
 
-        fourGesture.setFingerStates(FLEX, EXTD, EXTD, EXTD, EXTD);
-        fourGesture.setOrientation(FINGER_UP);
+        fourGesture.addFingerStates(FLEX, EXTD, EXTD, EXTD, EXTD);
+        fourGesture.addOrientation(FINGER_UP);
         fourGesture.setDroneID((uint8_t)4);
         bank.push_back(fourGesture);
 
-        thumbsDown.setOrientation(THUMB_DOWN);
-        thumbsDown.setFingerStates(EXTD,FLEX,FLEX,FLEX,FLEX);
+        thumbsDown.addOrientation(THUMB_DOWN);
+        thumbsDown.addFingerStates(EXTD,FLEX,FLEX,FLEX,FLEX);
         bank.push_back(thumbsDown);
 
-        thumbsUp.setOrientation(THUMB_UP);
-        thumbsUp.setFingerStates(EXTD,FLEX,FLEX,FLEX,FLEX);
+        thumbsUp.addOrientation(THUMB_UP);
+        thumbsUp.addFingerStates(EXTD,FLEX,FLEX,FLEX,FLEX);
         bank.push_back(thumbsUp);
 
-        erase.setOrientation(FINGER_DOWN);
-        erase.setFingerStates(EXTD,FLEX,EXTD,EXTD,FLEX);
-        erase.addFingerStates(FLEX,FLEX,EXTD,EXTD,FLEX);
+        erase.addOrientation(PALM_DOWN);
+        erase.addFingerStates(EXTD,EXTD,EXTD,FLEX,FLEX);
+        erase.addFingerStates(FLEX,EXTD,EXTD,FLEX,FLEX);
         bank.push_back(erase);
+
+        call.addFingerStates(EXTD,FLEX,FLEX,FLEX,EXTD);
+        bank.push_back(call);
 
         std::sort(bank.begin(), bank.end());
 
@@ -127,8 +131,8 @@ class GestureNode : public rclcpp::Node
         {
 
             //Initialize configuration for mode toggle gesture, The gesture is "Rock and Roll"
-            toggle.setOrientation(FINGER_UP);
-            toggle.setFingerStates(FLEX,EXTD,FLEX,FLEX,EXTD);
+            toggle.addOrientation(FINGER_UP);
+            toggle.addFingerStates(FLEX,EXTD,FLEX,FLEX,EXTD);
             toggle.addFingerStates(EXTD,EXTD,FLEX,FLEX,EXTD);
 
             toggleLock = false;
@@ -233,7 +237,7 @@ class GestureNode : public rclcpp::Node
                     }
 
                     //Case 3: Clear case, makes it so all agents are selected i.e. latest_agent_id_ = 0
-                    else if(it->checkGesture(0b00001010)){
+                    else if(it->checkGesture(0b11000011)){
                         RCLCPP_INFO(this->get_logger(), "Selected agents cleared");
                         latest_agentid_ = 0;
                     }
@@ -267,9 +271,9 @@ class GestureNode : public rclcpp::Node
                         //Case 5.2: If the agent lock is engaged, then the user must tell program what to do with the currently selected agent
                         else{
                             int selectedAgentAsInt;
-                            
+                            int bitChecker = 0; 
                             for(int i = 0; i < 8; i++){
-                                int bitChecker = latest_agentid_ << i;
+                                bitChecker = latest_agentid_ << i;
 
                                 if((bitChecker%10)==1){
                                     i = 8;
@@ -303,7 +307,7 @@ class GestureNode : public rclcpp::Node
             }
 
             //  Log the calculation 
-            RCLCPP_INFO(this->get_logger(), "Received: [%u]", static_cast<unsigned int>(data));
+            RCLCPP_INFO(this->get_logger(), "Received: [%x]", static_cast<unsigned int>(data));
             //RCLCPP_INFO(this->get_logger(), "Published: %d", result);
         }
         
