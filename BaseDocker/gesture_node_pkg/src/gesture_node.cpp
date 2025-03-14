@@ -37,6 +37,7 @@ std::vector<gesture> initializeCommandBank()
         pointForward.addOrientation(THUMB_UP);
         pointForward.addOrientation(PALM_UP);
         pointForward.addOrientation(PALM_DOWN);
+        pointForward.addOrientation(THUMB_DOWN);
         pointForward.addFingerStates(FLEX,EXTD,FLEX,FLEX,FLEX);
         pointForward.assignDroneCommand(CMD_FORWARD);
         bank.push_back(pointForward);
