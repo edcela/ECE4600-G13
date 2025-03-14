@@ -42,14 +42,13 @@ typedef struct PID {
 
 //Command Bank
 typedef enum {
-	CMD_INVALID,     		// Used for unknown/invalid commands
+	CMD_INVALID,     	// Used for unknown/invalid commands
     CMD_LEFT,       		// Unique identifier for "tilt left"
     CMD_RIGHT,      		// Unique identifier for "tilt right"
     CMD_FORWARD,    		// Unique identifier for "tilt forward"
     CMD_BACK,       		// Unique identifier for "tilt backward"
     CMD_ASCEND,     		// Unique identifier for "ascend"
-    CMD_DESCEND,			// Unique identifier for "descend"
-//    CMD_REGULAR_SHUTOFF,	// Smooth shutoff
+    CMD_DESCEND,		// Unique identifier for "descend"
     CMD_EMERGENCY_SHUTOFF	// Immediate shutoff
 } DroneCommand;
 /* USER CODE END PTD */
@@ -64,12 +63,7 @@ typedef enum {
 #define MOTOR_HOVER_SPEED 200			//Motor speed to use for hovering (Max. 2000)
 
 #define MPU6500_ADDR 0xD0				//MPU6500 I2C Address (AD0 = 0)
-#define GYRO_XOUT_H 0x43				//gyro X-axis high byte register address
-#define GYRO_YOUT_H 0x45				//gyro Y-axis high byte register address
-#define GYRO_ZOUT_H 0x47				//gyro Z-axis high byte register address
 #define ACCEL_XOUT_H 0x3B				//accel X-axis high byte register address
-#define ACCEL_YOUT_H 0x3D				//accel Y-axis high byte register address
-#define ACCEL_ZOUT_H 0x3F				//accel Z-axis high byte register address
 #define GYRO_SAMPLES 100				//Number of samples to take for calibration
 
 #define RECV_SIZE 1						//buffer size to hold received UART data
@@ -79,7 +73,7 @@ typedef enum {
 #define MIN_INTEGRAL -50.0f				//
 #define MAX_INTEGRAL 50.0f				//
 #define RAD_TO_DEG 57.2958				//Rad to Deg conversion factor
-#define ALPHA 0.98						//Filter coefficient (higher = gyro trust)
+#define ALPHA 0.98					//Filter coefficient (higher = gyro trust)
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -125,7 +119,6 @@ void Update_FilteredAngle(float *roll, float *pitch, int16_t ax, int16_t ay, int
 float Compute_PID(PID *pid);
 
 void print_sensor_data(int16_t ax, int16_t ay, int16_t az, int16_t gx, int16_t gy, int16_t gz);
-void print_PID_data(float roll_Output, float pitch_Output);
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -211,7 +204,8 @@ int main(void)
 	  Read_Gyro_Accel_Data(&ax, &ay, &az, &gx, &gy, &gz);
 	  Update_FilteredAngle(&current_roll, &current_pitch, ax, ay, az, gx, gy, dt);
 
-//	  print_sensor_data(ax,ay,az,gx,gy,gz);
+	  //Print out gyro and accelerometer data for debugging
+	  //print_sensor_data(ax,ay,az,gx,gy,gz);
 
 	  //update dt in the PID structs
 	  pid_roll.dt = dt;
@@ -232,8 +226,6 @@ int main(void)
 	  motor_speeds[2] = motor_speeds[2] - roll_output;// + pitch_output;
 	  motor_speeds[3] = motor_speeds[3] - roll_output;// - pitch_output;
 	  Update_Motors();
-
-//	  print_PID_data(roll_output,pitch_output);
 
 	  HAL_Delay(50);
 
@@ -499,9 +491,9 @@ float Compute_PID(PID *pid)
 	if(outputPID < pid->min_output) outputPID = pid->min_output;
 
 	//Print the values for troubleshooting
-//	printf("Error: %.2f | P: %.2f | I: %.2f | D: %.2f | Output: %.2f\r\n", error, termP, termI, termD, outputPID);
-//	printf("Setpoint: %.2f | Measured: %.2f | Error: %.2f\r\n", pid->setpoint, pid->measured_val, error);
-//	printf("dt: %.6f\r\n", pid->dt);
+	//printf("Error: %.2f | P: %.2f | I: %.2f | D: %.2f | Output: %.2f\r\n", error, termP, termI, termD, outputPID);
+	//printf("Setpoint: %.2f | Measured: %.2f | Error: %.2f\r\n", pid->setpoint, pid->measured_val, error);
+	//printf("dt: %.6f\r\n", pid->dt);
 
 	return outputPID;
 }
@@ -724,11 +716,6 @@ void blinkLEDs(int count)
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
 	HAL_UART_Receive_IT(&huart6, RxBuf, RECV_SIZE);
-}
-
-void print_PID_data(float roll_Output, float pitch_Output)
-{
-	printf("Roll Output Reading:%.2f | Pitch Output Reading:%.2f\r\n", roll_Output,pitch_Output);
 }
 
 void print_sensor_data(int16_t ax, int16_t ay, int16_t az, int16_t gx, int16_t gy, int16_t gz)
