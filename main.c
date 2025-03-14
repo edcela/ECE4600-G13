@@ -39,7 +39,7 @@ typedef enum {
 /* USER CODE BEGIN PD */
 #define RECV_SIZE 1						//buffer size to hold received UART data
 #define HIGH_SPEED 400
-#define LOW_SPEED 200
+#define LOW_SPEED 0
 
 /* USER CODE END PD */
 
@@ -350,10 +350,10 @@ void Handle_Input()
 		case 5:
 			command = CMD_FORWARD;
 			break;
-		case 3:
+		case 4:
 			command = CMD_LEFT;
 			break;
-		case 4:
+		case 3:
 			command = CMD_RIGHT;
 			break;
 		default:
