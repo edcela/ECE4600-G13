@@ -1,0 +1,463 @@
+#ifndef GLOVE_H
+#define GLOVE_H
+
+#include <vector>
+#include <string>
+#include <iostream>
+#include <stdint.h>
+#include <math.h>
+
+//FOR UNIVERSAL IDS OF GESTURE MESSAGE PACKET
+// Defines for the different hand orientations
+#define FINGER_UP   0b00000001
+#define FINGER_DOWN 0b00000110
+#define THUMB_UP    0b00000010
+#define THUMB_DOWN  0b00000101
+#define PALM_UP     0b00000100
+#define PALM_DOWN   0b00000011
+#define NULL        0b00000000
+
+// Defines for the different finger flexion states
+#define FLEX 0x00
+#define EXTD 0x01
+
+// Defines for drone identifiers
+#define DRN_1 0b00000001
+#define DRN_2 0b00000010
+#define DRN_3 0b00000100
+#define DRN_4 0b00001000
+#define DRN_5 0b00010000
+
+//Commands for controlling the drone
+typedef enum : uint8_t {
+    CMD_LEFT                = 3,
+    CMD_RIGHT               = 4,
+    CMD_FORWARD             = 5,
+    CMD_BACK                = 6,
+    CMD_ASCEND              = 1,
+    CMD_DESCEND             = 2,
+    CMD_REGULAR_SHUTOFF     = 7,
+    CMD_EMERGENCY_SHUTOFF   = 7,
+    CMD_INVALID             = 0   
+} DroneCommand;
+
+
+
+enum phase{
+    PHASE_SELECTION,
+    PHASE_CONTROL
+};
+
+//Omitted idle state since hardly realizable on glove
+class FlexSensor {
+public:
+    //constructor
+    FlexSensor(int pin);
+
+    //update raw value
+    void updateRaw();
+
+    //scales sensor range to whatever user specifies it to be
+    void adjustScale(int newMin, int newMax);
+    void adjustThreshold(int newThreshold);
+
+    int getRaw();
+
+    int getScaled();
+
+    //this requires actual calibration depending on user hand flex ranges
+    uint8_t flexCheck();
+    
+private:
+    void autoCalibrate();
+
+    void scale(int* valueToScale, int input);
+
+    int rawValue;
+    int pin;
+
+    int max = 0;
+    int min = 10000;
+
+    int scaledVal;
+    int scaledMax;
+    int scaledMin;
+
+    int flexState;
+};
+
+class tiltSensor {
+//the following are the key motions of the wrist: flexion, extension, radial deviation, ulnar deviation, pronation and supination
+//radial and ulnar deviation would require either a magnetometer to detect so will be dropped for now
+public:
+    tiltSensor(MPU6050* mpu);
+    ~tiltSensor();
+
+    void setAccelValues();                      //Gets acceleration values from MPU6050
+    void setFingerUpRange(int pitchFromUp);
+    void setFingerDownRange(int pitchFromDown);
+    void setThumbUpRange(int input);
+    void setThumbDownRange(int input);
+    void setPalmUpRange(int input);
+    void setPalmDownRange(int input);
+
+    uint8_t getOrientation();
+
+private:
+    MPU6050* mpu;    
+    int16_t ax, ay, az;
+
+    float pitch;
+    float roll;
+
+    int fingerUpRange;
+    int fingerDownRange;
+    int thumbUpRange;
+    int thumbDownRange;
+    int palmUpRange;
+    int palmDownRange;
+};
+
+//Gesture class
+//This class is now repurposed to be a means of categorizing gestures and comparing them to the current gesture
+//This class also includes the command equivalent of the assigned gesture
+class gesture {
+public:
+    //Create a gesture object with a name and a set of finger states.
+    gesture();
+    ~gesture();       //deconstructor
+
+    void updateID(uint8_t ID);
+    //uint8_t getGestureID() const;    //Get the sensor data of the gesture
+
+    //void setOrientation(uint8_t inputOrientation);    //Set the BASE orientation to be used for IDing a gesture.
+    void addOrientation(uint8_t inputOrientation);    //If a gesture is valid for multiple SPECIFIC BUT NOT ALL orientations, add them using this function.
+    //uint8_t getOrientation() const;    //Returns the orientation of the gesture. If multiple orientations are allowed, only the first orientation is returned.
+
+    //void setFingerStates(uint8_t thumb, uint8_t index, uint8_t middle, uint8_t ring, uint8_t pinky);    //Set the flexion states of the fingers for this gesture. The order is thumb, index, middle, ring, pinky.
+    void addFingerStates(uint8_t thumb, uint8_t index, uint8_t middle, uint8_t ring, uint8_t pinky);    //If a gesture requires multiple possible finger states, add them using this function.
+    //uint8_t getFingerStates() const;    //Returns flexion states. As in the gestureID of this gesture with orientation omitted.
+
+    void assignDroneCommand(DroneCommand command); //Assigns a specific command to the gesture. Only one command is allowed.
+    DroneCommand getDroneCommand () const;
+
+    void setDroneID(uint8_t droneNum); //Assigns a DroneID for this gesture. Only one ID is allowed.
+    uint8_t getDroneID() const;
+
+    bool checkGesture(uint8_t currentGesture) const;    //Check if the gesture matches the current gesture
+
+    //this is used for sorting gestures in a set
+    bool operator < (const gesture& otherGesture) const;
+    bool operator > (const gesture& otherGesture) const;
+    bool operator == (const gesture& otherGesture) const;
+
+    //removes all gesture information
+    void clearGesture();
+    void clearCommand();
+
+private:
+    //uint8_t gestureID;                  //Sensor data formatted such that the first 5 bits are the finger states and the last 3 bits are the hand orientation
+    DroneCommand assignedDroneCommand;  //The DRONE command that is assigned to the gesture
+    bool assignedDroneSelect;
+    uint8_t droneID;                        //Corresponding drone ID for this gesture
+
+    std::vector<uint8_t> allowedFlexionStates;
+    std::vector<uint8_t> allowedOrientations;
+
+    int gesturePriority = 1;
+};
+
+#endif // GLOVE_H
+
+//Gesture class
+//This class is now repurposed to be a means of categorizing gestures and comparing them to the current gesture
+//This class also includes the command equivalent of the assigned gesture
+//Functions commented out are obselete functions that were programmed for troubleshooting
+gesture::gesture() 
+        :   /*orientation(0), 
+            flexion(0), 
+            gestureID(0), 
+            multipleOrientations(false),
+            multipleFlexionStates(false), */
+            assignedDroneCommand(CMD_INVALID),
+            droneID(0)
+            {}
+
+
+gesture::~gesture() {}       //deconstructor
+
+void gesture::updateID(uint8_t ID){
+    uint8_t flexion = ID & 0xF8;
+    uint8_t orientation = ID & 0x07;
+
+        allowedFlexionStates.push_back(flexion);
+        allowedOrientations.push_back(orientation);
+
+        if(gesturePriority >= 1){
+                gesturePriority = 0;
+        }
+}
+
+//Get the sensor data of the gesture
+/*uint8_t gesture::getGestureID() const {
+    return gestureID;
+}*/
+
+//Set the BASE orientation to be used for IDing a gesture.
+/* void gesture::setOrientation(uint8_t inputOrientation){
+    gestureID = (gestureID & 0xF8) | inputOrientation;           //clear last 3 bits
+    orientation = inputOrientation;
+        if(gesturePriority >= 1){
+                gesturePriority = 0;
+        }
+} */
+
+//If a gesture is valid for multiple SPECIFIC BUT NOT ALL orientations, add them using this function.
+void gesture::addOrientation(uint8_t inputOrientation){
+        if(gesturePriority >= 1){
+                gesturePriority = 0;
+        }
+        
+        allowedOrientations.push_back(inputOrientation);
+}
+
+//Returns the orientation of the gesture. If multiple orientations are allowed, only the first orientation is returned.
+/*uint8_t gesture::getOrientation() const {
+    return orientation;
+}*/
+
+//Set the flexion states of the fingers for this gesture. The order is thumb, index, middle, ring, pinky.
+/*void gesture::setFingerStates(uint8_t thumb, uint8_t index, uint8_t middle, uint8_t ring, uint8_t pinky) {
+    uint8_t fingerStateBits = 0;
+    fingerStateBits |= (index << 7);
+    fingerStateBits |= (middle << 6);
+    fingerStateBits |= (ring << 5);
+    fingerStateBits |= (pinky << 4);
+    fingerStateBits |= (thumb << 3);
+
+    gestureID = (gestureID & 0x07) | fingerStateBits;  // Replace the first 5 bits with the new finger states
+    flexion = fingerStateBits;
+}*/
+
+//If a gesture requires multiple possible finger states, add them using this function.
+void gesture::addFingerStates(uint8_t thumb, uint8_t index, uint8_t middle, uint8_t ring, uint8_t pinky){
+    uint8_t fingerStateBits = 0;
+    fingerStateBits |= (index << 7);
+    fingerStateBits |= (middle << 6);
+    fingerStateBits |= (ring << 5);
+    fingerStateBits |= (pinky << 4);
+    fingerStateBits |= (thumb << 3);
+        
+    allowedFlexionStates.push_back(fingerStateBits);
+}
+
+//Returns flexion states. As in the gestureID of this gesture with orientation omitted.
+/*uint8_t gesture::getFingerStates() const {
+    return flexion;
+}*/
+
+void gesture::assignDroneCommand(DroneCommand command){
+    assignedDroneCommand = command;
+}
+
+DroneCommand gesture::getDroneCommand() const {
+    return assignedDroneCommand;
+}
+
+void gesture::setDroneID(uint8_t droneNum){
+    droneID = droneNum;
+}
+
+uint8_t gesture::getDroneID() const {
+    return droneID;
+}
+
+//Check if the gesture matches the current gesture
+bool gesture::checkGesture(uint8_t currentGesture) const {
+    //It is implemented that certain gestures can have specific allowed states.
+    //So the cases where multiple states are allowed are handled differently than if
+    //a gesture only has one allowed state.
+
+    //Case 1: Any orientation is valid, only finger states are checked
+    if (allowedOrientations.empty()) {
+        return std::any_of(allowedFlexionStates.begin(), allowedFlexionStates.end(), [currentGesture](uint8_t flexion){return (currentGesture&0xF8) == flexion;});
+    }
+/*
+    //Case 2: Only one finger state is valid for this gesture
+    if (!multipleFlexionStates) {
+        if (!multipleOrientations) {
+            return currentGesture == gestureID;
+        } else {
+            return std::any_of(allowedOrientations.begin(), allowedOrientations.end(), [currentGesture, this](uint8_t orientation) { return currentGesture == (flexion + orientation); });
+        }
+    }
+
+    //Case 3: Multiple finger states is valid for this gesture but only one orientation
+    if (!multipleOrientations) {
+        return std::any_of(allowedFlexionStates.begin(), allowedFlexionStates.end(),
+            [currentGesture, this](uint8_t flexion) { return currentGesture == (flexion + orientation); });
+    }
+*/
+    //Case 2: Multiple finger states and multiple orientations are valid for this gesture
+    return std::any_of(allowedFlexionStates.begin(), allowedFlexionStates.end(),
+        [this, currentGesture](uint8_t flexion) { return std::any_of(allowedOrientations.begin(), allowedOrientations.end(),
+                [currentGesture, flexion](uint8_t orientation) { return currentGesture == (flexion + orientation); });
+        });
+}
+
+//this is used for sorting gestures in a set
+bool gesture::operator < (const gesture& otherGesture) const {
+    return gesturePriority < otherGesture.gesturePriority;
+}
+
+bool gesture::operator > (const gesture& otherGesture) const {
+    return gesturePriority > otherGesture.gesturePriority;
+}
+
+/*
+bool gesture::operator == (const gesture& otherGesture) const {
+    return checkGesture(otherGesture.getGestureID());
+}
+*/
+
+//removes all gesture information
+void gesture::clearGesture(){
+//    gestureID = 0;
+//    flexion = 0;
+//    orientation = 0;
+
+    assignedDroneCommand = CMD_INVALID;
+        droneID = 0;
+//    multipleFlexionStates = false;
+//    multipleOrientations = false;
+
+    allowedFlexionStates.clear();
+    allowedOrientations.clear();
+
+}
+
+//Standardizes gesture command to Neutral
+void gesture::clearCommand(){
+    assignedDroneCommand = CMD_INVALID;
+}
+
+//Glove Version of Glove Header File
+//Includes all functions except Gesture Bank
+
+//constructor
+FlexSensor::FlexSensor(int pin) : pin(pin), rawValue(0), scaledVal(0), max(0), min(2000), flexState(40) { //declare what adc pin it is connected on esp32
+}
+
+//update raw value
+void FlexSensor::updateRaw(){   //must be updated to automatically read from pin within header rather from main.cpp
+    rawValue = analogRead(pin);
+    this->autoCalibrate();
+}
+
+
+//scales sensor range to whatever user specifies it to be
+void FlexSensor::adjustScale(int newMin, int newMax){
+    scaledMax = newMax;
+    scaledMin = newMin;
+
+    scale(&scaledVal, rawValue);
+
+    Serial.printf("%d",scaledVal);
+    Serial.println("");
+}
+
+
+void FlexSensor::adjustThreshold(int newThreshold){
+  flexState = newThreshold;
+}
+
+int FlexSensor::getRaw(){
+    return rawValue;
+}
+
+int FlexSensor::getScaled(){
+    return scaledVal;
+}
+
+//this requires actual calibration depending on user hand flex ranges
+uint8_t FlexSensor::flexCheck(){
+    if(scaledVal < flexState){
+        return FLEX;  //this is extended
+    }
+    else{
+        return EXTD;  //this is flexed state
+    }
+}
+
+//this needs to be modified to include a dampening logic that prevents outlier values from replacing max and min
+void FlexSensor::autoCalibrate() {
+    //Update scale
+    if (rawValue > max) {
+        max = rawValue;
+        return;
+    }
+    if (rawValue < min) {
+        min = rawValue;
+        return;
+    }
+}
+
+void FlexSensor::scale(int* valueToScale, int input){
+    int range = max - min;
+    if (range == 0) range = 1;  //to eliminate divide by 0 error
+    int scaledRange = scaledMax - scaledMin;
+
+    *valueToScale = (((input - min) * (scaledRange)) / (range)) + scaledMin;
+}
+
+//the following are the key motions of the wrist: flexion, extension, radial deviation, ulnar deviation, pronation and supination
+//radial and ulnar deviation would require either a magnetometer to detect so will be dropped for now
+//Captures current orientation of hand sensor by calculating roll and pitch. Does not capture direction.
+tiltSensor::tiltSensor(MPU6050* mpuInput) : ax(0), ay(0), az(0), pitch(0), roll(0) {
+  mpu = mpuInput;
+}
+
+void tiltSensor::setAccelValues(){
+    mpu->getAcceleration(&ax, &ay, &az);
+
+    float accelx = ax/16384.0f;
+    float accely = ay/16384.0f;
+    float accelz = az/16384.0f;
+    
+    //automated the conversion to pitch and roll which i assume are more useful values
+    pitch = atan2(-ax, sqrt(ay * ay + az * az)) * 180 / M_PI;
+    roll = atan2(ay, az) * 180 / M_PI;
+}
+
+//all of these values purely depend on my own arm's range of motion and are arbitrary
+//thumb up, thumb down, palm down, palm up, point down, point up
+uint8_t tiltSensor::getOrientation(){
+    //Check these two first, everything else is outside these ranges
+    if (pitch > 45) {
+      Serial.println("Orientation is: FINGER_UP");
+      return FINGER_UP;   // Finger Up
+    }
+    if (pitch < -45) {
+      Serial.println("Orientation is: FINGER_DOWN");
+      return FINGER_DOWN; // Finger Down
+    }
+
+    if (roll >= -135 && roll <= -45){
+      Serial.println("Orientation is: THUMB_UP");
+      return THUMB_UP;  // Thumb Down
+    }
+    if (roll >= -45 && roll <= 45){
+      Serial.println("Orientation is: PALM_DOWN");
+      return PALM_DOWN;    // Palm Down
+    } 
+    if (roll >= 45 && roll <= 135){
+      Serial.println("Orientation is: THUMB_DOWN");
+      return THUMB_DOWN;     // Thumb Up
+    } 
+    if ((roll >= 135 && roll <= 180) || (roll >= -180 && roll <= -135)){
+      Serial.println("Orientation is: PALM_UP");
+      return PALM_UP; // Palm Up
+    } 
+
+    return NULL;
+}
