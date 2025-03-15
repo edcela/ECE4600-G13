@@ -19,9 +19,9 @@
 HardwareSerial agentSerial(1);
 
 /* Hotspot */
-char* ssid = "edcel";
-char* pass = "edcel1234";
-char* agent_ip = "172.20.10.9";
+char* ssid = "INSERT HOTSPOT SSID HERE";
+char* pass = "INSERT HOTSPOT PASSWORD HERE";
+char* agent_ip = "INSERT MAIN COMPUTER IP";
 
 char* agent_port = "8888";
 
